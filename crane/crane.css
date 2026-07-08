@@ -1,0 +1,608 @@
+/* ============================================
+   🏗️ Crane Game - Styles
+   ============================================ */
+
+/* --- Attempt Counter --- */
+.attempt-counter {
+  margin-left: auto;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--neon-yellow);
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  white-space: nowrap;
+}
+
+/* --- Crane Machine Container --- */
+.crane-machine {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  max-height: 55vh;
+  background: linear-gradient(180deg, #0d0d2b 0%, #0a0a20 100%);
+  border: 2px solid var(--neon-blue);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow:
+    0 0 15px var(--neon-blue-glow),
+    0 0 30px rgba(123, 104, 238, 0.1),
+    inset 0 0 30px rgba(123, 104, 238, 0.05);
+}
+
+/* --- Machine Top Frame (decorative lights) --- */
+.machine-top-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 20%;
+  z-index: 5;
+}
+
+.machine-light {
+  width: 8px;
+  height: 4px;
+  border-radius: 0 0 4px 4px;
+}
+
+.machine-light--1 {
+  background: var(--neon-pink);
+  box-shadow: 0 0 8px var(--neon-pink-glow);
+  animation: lightBlink 1.5s ease-in-out infinite;
+}
+
+.machine-light--2 {
+  background: var(--neon-green);
+  box-shadow: 0 0 8px var(--neon-green-glow);
+  animation: lightBlink 1.5s ease-in-out infinite 0.5s;
+}
+
+.machine-light--3 {
+  background: var(--neon-yellow);
+  box-shadow: 0 0 8px var(--neon-yellow-glow);
+  animation: lightBlink 1.5s ease-in-out infinite 1s;
+}
+
+@keyframes lightBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* --- Glass Reflection Overlay --- */
+.glass-reflection {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  pointer-events: none;
+  z-index: 10;
+  border-radius: inherit;
+}
+
+.glass-reflection::before {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: 5%;
+  width: 30%;
+  height: 20%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  border-radius: 50%;
+  filter: blur(8px);
+  transform: rotate(-15deg);
+}
+
+/* --- Rail & Crane --- */
+.crane-rail {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 30px;
+  z-index: 3;
+  overflow: visible; /* クローに追従する景品がクリップされないよう */
+}
+
+.rail-track {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  background: linear-gradient(180deg, #4a4a6a, #2a2a4a);
+  border-radius: 3px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.rail-track::before,
+.rail-track::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  width: 10px;
+  height: 12px;
+  background: #3a3a5a;
+  border-radius: 2px;
+  border: 1px solid #5a5a7a;
+}
+
+.rail-track::before { left: -2px; }
+.rail-track::after { right: -2px; }
+
+/* --- Crane Assembly (moves horizontally) --- */
+.crane-assembly {
+  position: absolute;
+  top: 0;
+  left: 8px;
+  width: 50px;
+  z-index: 4;
+  overflow: visible; /* 景品追従のため */
+  /* JS controls transform: translateX() */
+}
+
+.crane-trolley {
+  width: 50px;
+  height: 22px;
+  background: linear-gradient(180deg, #5b4ed4, #3d35a0);
+  border-radius: 6px 6px 3px 3px;
+  border: 1px solid rgba(123, 104, 238, 0.6);
+  box-shadow: 0 0 10px var(--neon-blue-glow);
+  position: relative;
+}
+
+.crane-trolley::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+/* --- Crane Wire --- */
+.crane-wire {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  width: 2px;
+  height: 30px;
+  background: linear-gradient(180deg,
+    #8a8aaa,
+    #6a6a8a
+  );
+  transform: translateX(-50%);
+  transform-origin: top center;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+  transition: height 0.6s ease-in-out;
+}
+
+/* Dashed wire pattern */
+.crane-wire::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0px,
+    rgba(255, 255, 255, 0.15) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+}
+
+/* --- Crane Claw Container --- */
+.crane-claw-container {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: top 0.6s ease-in-out;
+}
+
+/* --- Crane Claw --- */
+.crane-claw {
+  position: relative;
+  width: 40px;
+  height: 36px;
+  overflow: visible; /* 子要素（掴んだ景品）がはみ出せるように */
+}
+
+.claw-center {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 12px;
+  background: linear-gradient(180deg, #7b68ee, #5b4ed4);
+  border-radius: 4px 4px 2px 2px;
+  border: 1px solid rgba(123, 104, 238, 0.5);
+  z-index: 2;
+}
+
+.claw-arm {
+  position: absolute;
+  top: 8px;
+  width: 4px;
+  height: 26px;
+  background: linear-gradient(180deg, #9a8aee, #6a5ad4);
+  border-radius: 2px;
+  transform-origin: top center;
+  transition: transform 0.3s ease;
+  z-index: 1;
+}
+
+.claw-arm::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 6px;
+  background: #7b68ee;
+  border-radius: 0 0 4px 4px;
+  border: 1px solid rgba(123, 104, 238, 0.7);
+}
+
+.claw-arm--left {
+  left: 6px;
+  transform: rotate(-20deg);
+}
+
+.claw-arm--right {
+  right: 6px;
+  transform: rotate(20deg);
+}
+
+/* Claw closed state */
+.crane-claw.claw-closed .claw-arm--left {
+  transform: rotate(-5deg);
+}
+
+.crane-claw.claw-closed .claw-arm--right {
+  transform: rotate(5deg);
+}
+
+/* Claw grabbing animation wiggle */
+.crane-claw.claw-grabbing {
+  animation: clawGrab 0.3s ease;
+}
+
+@keyframes clawGrab {
+  0% { transform: rotate(0); }
+  25% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+  75% { transform: rotate(-2deg); }
+  100% { transform: rotate(0); }
+}
+
+/* --- Play Area (where prizes sit) --- */
+.play-area {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35%;
+  z-index: 2;
+  background: linear-gradient(180deg, transparent 0%, rgba(123, 104, 238, 0.03) 100%);
+}
+
+/* Floor */
+.play-area::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--neon-blue) 15%,
+    var(--neon-blue) 85%,
+    transparent 100%
+  );
+  opacity: 0.4;
+}
+
+/* --- Prize Items --- */
+.prize-item {
+  position: absolute;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: default;
+  user-select: none;
+  transition: transform 0.3s ease, opacity 0.5s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  z-index: 2;
+}
+
+.prize-item.prize-grabbed {
+  z-index: 20;
+  transition: all 0.5s ease;
+}
+
+.prize-item.prize-dropping {
+  animation: prizeDrop 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes prizeDrop {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  60% { transform: translateY(60px) rotate(15deg); opacity: 1; }
+  100% { transform: translateY(120px) rotate(25deg); opacity: 0; }
+}
+
+.prize-item.prize-miss {
+  animation: prizeMissed 0.5s ease;
+}
+
+@keyframes prizeMissed {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+
+/* --- Prize Chute --- */
+.prize-chute {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 60%;
+  z-index: 1;
+  border-right: 2px dashed rgba(123, 104, 238, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+}
+
+.prize-chute-opening {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(180deg,
+    rgba(123, 104, 238, 0.15),
+    transparent
+  );
+}
+
+.prize-chute-label {
+  font-size: 0.5rem;
+  color: var(--neon-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.5;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-weight: 700;
+}
+
+/* --- Collected Prizes Area --- */
+.collected-area {
+  padding: var(--space-md);
+}
+
+.collected-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.collected-prizes {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  min-height: 40px;
+  align-items: center;
+}
+
+.collected-empty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.collected-prize-item {
+  font-size: 1.6rem;
+  animation: collectedPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  filter: drop-shadow(0 0 6px rgba(123, 104, 238, 0.4));
+}
+
+@keyframes collectedPop {
+  0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(10deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* --- Grab Button --- */
+.grab-btn-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-bottom: var(--space-md);
+}
+
+.grab-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: 300px;
+  padding: 20px 40px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--neon-pink), #ff3d7f, var(--neon-orange));
+  color: white;
+  font-family: var(--font-family);
+  font-size: 1.4rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow:
+    0 0 20px var(--neon-pink-glow),
+    0 0 40px rgba(255, 107, 157, 0.15),
+    0 4px 15px rgba(0, 0, 0, 0.3);
+  -webkit-user-select: none;
+  user-select: none;
+  animation: grabBtnPulse 2s ease-in-out infinite;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.grab-btn:active {
+  transform: scale(0.95);
+  box-shadow:
+    0 0 30px var(--neon-pink-glow),
+    0 0 60px rgba(255, 107, 157, 0.25);
+}
+
+.grab-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  animation: none;
+}
+
+.grab-btn-text {
+  position: relative;
+  z-index: 1;
+}
+
+.grab-btn-icon {
+  font-size: 1.2rem;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes grabBtnPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 20px var(--neon-pink-glow),
+      0 0 40px rgba(255, 107, 157, 0.15),
+      0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 30px var(--neon-pink-glow),
+      0 0 60px rgba(255, 107, 157, 0.3),
+      0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Ripple effect on button */
+.grab-btn::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 2px solid var(--neon-pink);
+  opacity: 0;
+  animation: grabBtnRing 2s ease-in-out infinite;
+}
+
+@keyframes grabBtnRing {
+  0%, 100% { transform: scale(1); opacity: 0; }
+  50% { transform: scale(1.05); opacity: 0.3; }
+}
+
+/* --- Result Prizes in Modal --- */
+.result-prizes {
+  justify-content: center;
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+/* --- Crane descending state (added by JS) --- */
+.crane-assembly.crane-descending .crane-wire {
+  height: var(--wire-height, 30px);
+}
+
+.crane-assembly.crane-descending .crane-claw-container {
+  top: var(--claw-top, 22px);
+}
+
+/* --- Crane position indicator shadow --- */
+.crane-shadow {
+  position: absolute;
+  bottom: 4px;
+  width: 30px;
+  height: 6px;
+  background: radial-gradient(ellipse, rgba(123, 104, 238, 0.3), transparent);
+  border-radius: 50%;
+  z-index: 1;
+  pointer-events: none;
+  transition: left 0.05s linear;
+}
+
+/* --- Mobile optimizations --- */
+@media (max-height: 700px) {
+  .crane-machine {
+    max-height: 50vh;
+  }
+}
+
+@media (max-height: 600px) {
+  .crane-machine {
+    max-height: 45vh;
+  }
+
+  .grab-btn {
+    padding: 16px 32px;
+    font-size: 1.2rem;
+  }
+}
+
+/* --- State: Game Over --- */
+.crane-machine.game-over {
+  opacity: 0.7;
+  filter: grayscale(0.3);
+}
+
+/* --- Neon border animation for machine --- */
+.crane-machine::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    45deg,
+    var(--neon-blue),
+    var(--neon-pink),
+    var(--neon-green),
+    var(--neon-blue)
+  );
+  background-size: 300% 300%;
+  animation: neonBorder 4s linear infinite;
+  z-index: -1;
+  opacity: 0.6;
+}
+
+@keyframes neonBorder {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

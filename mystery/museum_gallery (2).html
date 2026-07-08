@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>THE GALLERY — 静寂の間</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --velvet-deep: #4a0e18;
+      --velvet-shadow: #230509;
+      --gold-bright: #e9c46a;
+      --gold-deep: #a97e2b;
+      --gold-dark: #5c4116;
+      --ivory: #f3e9d2;
+      --ivory-dim: #cbb98f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    #canvas-wrap {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* cinematic vignette */
+    #vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.55) 100%);
+    }
+
+    #grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    }
+
+    /* plaque overlay (HTML fallback caption, subtle, bottom corner) */
+    #hint {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 4;
+      color: rgba(203, 185, 143, 0.55);
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 2s ease 1s;
+    }
+
+    #hint.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="canvas-wrap"></div>
+  <div id="vignette"></div>
+  <div id="grain"></div>
+  <div id="hint">次のQRコードはここにあります<br>このサイトは以上です、消してもらって構いません</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      /* ============================================================
+         ★★★ 画像を変更するにはここだけ編集してください ★★★
+         画像ファイル名・パス・URL・base64 (data:image/png;base64,...) を
+         指定すると額の中の絵が自動で差し替わります(縦横比も自動調整)。
+         空文字 "" のままだとプレースホルダーの抽象画が表示されます。
+    
+         例1: var PAINTING_IMAGE_SRC = "my-painting.jpg";
+         例2: var PAINTING_IMAGE_SRC = "https://example.com/art.png";
+         ============================================================ */
+      var PAINTING_IMAGE_SRC = "s.png";
+      var ARTWORK_TITLE = "無題";
+      var ARTWORK_ARTIST = "作者不詳";
+      var ARTWORK_MEDIUM = "Oil on canvas, undated";
+      /* ============================================================ */
+
+      /* ============================================================
+         TEXTURE GENERATION (all procedural — no external images)
+         ============================================================ */
+
+      function makeMarbleTexture(size) {
+        size = size || 1024;
+        var c = document.createElement('canvas'); c.width = c.height = size;
+        var ctx = c.getContext('2d');
+        var base = ctx.createLinearGradient(0, 0, size, size);
+        base.addColorStop(0, '#efe9dd');
+        base.addColorStop(0.5, '#e3dccb');
+        base.addColorStop(1, '#d8cfba');
+        ctx.fillStyle = base; ctx.fillRect(0, 0, size, size);
+
+        function vein(alpha, width, hue) {
+          ctx.strokeStyle = 'rgba(' + hue + ',' + alpha + ')';
+          ctx.lineWidth = width;
+          ctx.beginPath();
+          var x = Math.random() * size, y = 0;
+          ctx.moveTo(x, y);
+          for (var i = 0; i < 7; i++) {
+            x += (Math.random() - 0.5) * size * 0.5;
+            y += size / 7;
+            ctx.bezierCurveTo(x + (Math.random() - 0.5) * 120, y - 40, x + (Math.random() - 0.5) * 120, y + 40, x, y);
+          }
+          ctx.stroke();
+        }
+        for (var i = 0; i < 26; i++) vein(0.10 + Math.random() * 0.10, 1 + Math.random() * 3, '150,140,120');
+        for (var j = 0; j < 10; j++) vein(0.18, 0.6, '90,80,65');
+
+        // subtle speckle
+        for (var s = 0; s < 3000; s++) {
+          ctx.fillStyle = 'rgba(' + (150 + Math.random() * 60) + ',' + (140 + Math.random() * 50) + ',' + (120 + Math.random() * 40) + ',0.06)';
+          ctx.fillRect(Math.random() * size, Math.random() * size, 1.4, 1.4);
+        }
+        var tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(3, 3);
+        return tex;
+      }
+
+      function makeVelvetTexture(size) {
+        size = size || 1024;
+        var c = document.createElement('canvas'); c.width = c.height = size;
+        var ctx = c.getContext('2d');
+        var base = ctx.createLinearGradient(0, 0, size, 0);
+        base.addColorStop(0, '#5c1120');
+        base.addColorStop(0.5, '#4a0e18');
+        base.addColorStop(1, '#3a0a13');
+        ctx.fillStyle = base; ctx.fillRect(0, 0, size, size);
+
+        // vertical velvet folds
+        for (var x = 0; x < size; x += 6) {
+          var shade = Math.sin(x * 0.04) * 18;
+          ctx.fillStyle = 'rgba(' + (10 + shade) + ',2,6,' + (0.10 + Math.random() * 0.05) + ')';
+          ctx.fillRect(x, 0, 3, size);
+          ctx.fillStyle = 'rgba(255,120,130,' + (0.03 + Math.random() * 0.02) + ')';
+          ctx.fillRect(x + 3, 0, 1, size);
+        }
+        // fabric noise
+        for (var n = 0; n < 9000; n++) {
+          ctx.fillStyle = 'rgba(0,0,0,' + (Math.random() * 0.05) + ')';
+          ctx.fillRect(Math.random() * size, Math.random() * size, 1, 1);
+        }
+        var tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(4, 2);
+        return tex;
+      }
+
+      function makePaintingTexture(size) {
+        size = size || 1024;
+        var c = document.createElement('canvas'); c.width = c.height = size;
+        var ctx = c.getContext('2d');
+        var bg = ctx.createRadialGradient(size * 0.5, size * 0.42, size * 0.05, size * 0.5, size * 0.5, size * 0.75);
+        bg.addColorStop(0, '#3a4a52');
+        bg.addColorStop(0.45, '#22303a');
+        bg.addColorStop(1, '#0f161c');
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, size, size);
+
+        var blobs = [
+          { x: 0.5, y: 0.38, r: 0.30, c: 'rgba(214,168,96,0.75)' },
+          { x: 0.30, y: 0.55, r: 0.20, c: 'rgba(160,60,50,0.55)' },
+          { x: 0.68, y: 0.60, r: 0.22, c: 'rgba(80,110,120,0.5)' },
+          { x: 0.50, y: 0.72, r: 0.28, c: 'rgba(30,24,22,0.6)' },
+          { x: 0.40, y: 0.30, r: 0.12, c: 'rgba(240,220,180,0.5)' }
+        ];
+        blobs.forEach(function (b) {
+          var g = ctx.createRadialGradient(size * b.x, size * b.y, 1, size * b.x, size * b.y, size * b.r);
+          g.addColorStop(0, b.c);
+          g.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = g;
+          ctx.fillRect(0, 0, size, size);
+        });
+
+        // brushstroke texture
+        ctx.globalCompositeOperation = 'overlay';
+        for (var i = 0; i < 400; i++) {
+          var sx = Math.random() * size, sy = Math.random() * size;
+          var len = 10 + Math.random() * 60;
+          var ang = Math.random() * Math.PI * 2;
+          ctx.strokeStyle = 'rgba(255,255,255,' + (Math.random() * 0.06) + ')';
+          ctx.lineWidth = 1 + Math.random() * 2;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + Math.cos(ang) * len, sy + Math.sin(ang) * len);
+          ctx.stroke();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+
+        // soft vignette on painting itself
+        var vg = ctx.createRadialGradient(size / 2, size / 2, size * 0.3, size / 2, size / 2, size * 0.72);
+        vg.addColorStop(0, 'rgba(0,0,0,0)');
+        vg.addColorStop(1, 'rgba(0,0,0,0.35)');
+        ctx.fillStyle = vg; ctx.fillRect(0, 0, size, size);
+
+        return new THREE.CanvasTexture(c);
+      }
+
+      function makeDustSprite() {
+        var c = document.createElement('canvas'); c.width = c.height = 64;
+        var ctx = c.getContext('2d');
+        var g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        g.addColorStop(0, 'rgba(255,244,214,0.9)');
+        g.addColorStop(0.4, 'rgba(255,230,180,0.35)');
+        g.addColorStop(1, 'rgba(255,230,180,0)');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, 64, 64);
+        return new THREE.CanvasTexture(c);
+      }
+
+      function makePlaqueTexture(title, artist, medium) {
+        var w = 1024, h = 320;
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        var ctx = c.getContext('2d');
+        var g = ctx.createLinearGradient(0, 0, 0, h);
+        g.addColorStop(0, '#caa54a');
+        g.addColorStop(0.5, '#8a6c28');
+        g.addColorStop(1, '#5c4116');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = '#2c1e08'; ctx.lineWidth = 6;
+        ctx.strokeRect(14, 14, w - 28, h - 28);
+        ctx.strokeStyle = 'rgba(255,240,200,0.5)'; ctx.lineWidth = 2;
+        ctx.strokeRect(26, 26, w - 52, h - 52);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#241705';
+        ctx.font = '700 76px Cinzel, serif';
+        ctx.fillText(title, w / 2, 140);
+        ctx.font = 'italic 44px Cormorant Garamond, serif';
+        ctx.fillText(artist, w / 2, 208);
+        ctx.font = '30px Cormorant Garamond, serif';
+        ctx.fillStyle = '#3a2a10';
+        ctx.fillText(medium, w / 2, 260);
+
+        return new THREE.CanvasTexture(c);
+      }
+
+      /* ============================================================
+         SCENE SETUP
+         ============================================================ */
+
+      var wrap = document.getElementById('canvas-wrap');
+      var scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x0a0304, 0.018);
+
+      var camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+      var CAM_START = new THREE.Vector3(0, 3.3, 13.5);
+      var CAM_END = new THREE.Vector3(0, 3.05, 5.4);
+      camera.position.copy(CAM_START);
+
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      if (renderer.outputEncoding !== undefined) renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      wrap.appendChild(renderer.domElement);
+
+      var ROOM_W = 20, ROOM_D = 20, ROOM_H = 9;
+
+      var marbleTex = makeMarbleTexture();
+      var velvetTex = makeVelvetTexture();
+      var paintingTex = makePaintingTexture(); // プレースホルダー(即時に使える)
+      var dustTex = makeDustSprite();
+      var plaqueTex = makePlaqueTexture(ARTWORK_TITLE, ARTWORK_ARTIST, ARTWORK_MEDIUM);
+
+      /* ---------- Floor (reflective marble) ---------- */
+      var floorMat = new THREE.MeshPhysicalMaterial({
+        map: marbleTex, color: 0xffffff,
+        metalness: 0.15, roughness: 0.22,
+        clearcoat: 1.0, clearcoatRoughness: 0.06,
+        reflectivity: 0.9
+      });
+      var floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_D), floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      /* fake mirror reflection: flipped duplicate of the room's key objects, faded */
+      var reflectionGroup = new THREE.Group();
+      reflectionGroup.scale.y = -1;
+      reflectionGroup.position.y = -0.02;
+      scene.add(reflectionGroup);
+
+      /* ---------- Walls ---------- */
+      var wallMat = new THREE.MeshStandardMaterial({ map: velvetTex, color: 0xffffff, roughness: 0.85, metalness: 0.05 });
+
+      var backWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_H), wallMat);
+      backWall.position.set(0, ROOM_H / 2, -ROOM_D / 2);
+      backWall.receiveShadow = true;
+      scene.add(backWall);
+
+      var leftWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_D, ROOM_H), wallMat);
+      leftWall.rotation.y = Math.PI / 2;
+      leftWall.position.set(-ROOM_W / 2, ROOM_H / 2, 0);
+      leftWall.receiveShadow = true;
+      scene.add(leftWall);
+
+      var rightWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_D, ROOM_H), wallMat);
+      rightWall.rotation.y = -Math.PI / 2;
+      rightWall.position.set(ROOM_W / 2, ROOM_H / 2, 0);
+      rightWall.receiveShadow = true;
+      scene.add(rightWall);
+
+      var ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_W, ROOM_D),
+        new THREE.MeshStandardMaterial({ color: 0x1a1210, roughness: 0.9 }));
+      ceiling.rotation.x = Math.PI / 2;
+      ceiling.position.set(0, ROOM_H, 0);
+      ceiling.receiveShadow = true;
+      scene.add(ceiling);
+
+      /* ---------- Gold moldings ---------- */
+      var goldMat = new THREE.MeshStandardMaterial({ color: 0xd9b25c, metalness: 0.9, roughness: 0.28 });
+      var goldMatDark = new THREE.MeshStandardMaterial({ color: 0x8a6c28, metalness: 0.85, roughness: 0.35 });
+
+      function addMolding(w, h, d, x, y, z, rotY) {
+        var m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), goldMat);
+        m.position.set(x, y, z);
+        if (rotY) m.rotation.y = rotY;
+        m.castShadow = true; m.receiveShadow = true;
+        scene.add(m);
+        return m;
+      }
+      // crown molding (top) & baseboard along all 3 walls
+      addMolding(ROOM_W, 0.35, 0.35, 0, ROOM_H - 0.2, -ROOM_D / 2 + 0.15);
+      addMolding(0.35, 0.35, ROOM_D, -ROOM_W / 2 + 0.15, ROOM_H - 0.2, 0);
+      addMolding(0.35, 0.35, ROOM_D, ROOM_W / 2 - 0.15, ROOM_H - 0.2, 0);
+      addMolding(ROOM_W, 0.3, 0.3, 0, 0.15, -ROOM_D / 2 + 0.15);
+      addMolding(0.3, 0.3, ROOM_D, -ROOM_W / 2 + 0.15, 0.15, 0);
+      addMolding(0.3, 0.3, ROOM_D, ROOM_W / 2 - 0.15, 0.15, 0);
+      // mid-height panel rail on side walls
+      addMolding(0.18, 0.18, ROOM_D - 1, -ROOM_W / 2 + 0.12, 2.6, 0);
+      addMolding(0.18, 0.18, ROOM_D - 1, ROOM_W / 2 - 0.12, 2.6, 0);
+
+      /* ---------- Columns (left & right) ---------- */
+      function buildColumn(x, z) {
+        var g = new THREE.Group();
+        var base = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.7, 0.35, 24), goldMatDark);
+        base.position.y = 0.175;
+        var shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.48, 5.6, 24), new THREE.MeshStandardMaterial({ color: 0xe7e0d2, roughness: 0.5, metalness: 0.05 }));
+        shaft.position.y = 0.35 + 2.8;
+        var necking = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.44, 0.2, 24), goldMat);
+        necking.position.y = 0.35 + 5.6;
+        var capital = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.55, 0.5, 24), goldMat);
+        capital.position.y = 0.35 + 5.6 + 0.35;
+        var abacus = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.22, 1.5), goldMat);
+        abacus.position.y = 0.35 + 5.6 + 0.7;
+        g.add(base, shaft, necking, capital, abacus);
+        g.children.forEach(function (m) { m.castShadow = true; m.receiveShadow = true; });
+        g.position.set(x, 0, z);
+        scene.add(g);
+
+        var refl = g.clone();
+        refl.traverse(function (o) { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.28; } });
+        reflectionGroup.add(refl);
+      }
+      [-6.6, 6.6].forEach(function (x) {
+        [3.5, -1.5, -6.0].forEach(function (z) { buildColumn(x, z); });
+      });
+
+      /* ============================================================
+         THE FRAMED PAINTING (sculptural, layered frame)
+         ============================================================ */
+      var paintingGroup = new THREE.Group();
+      var frameZ = -ROOM_D / 2 + 0.28;
+
+      var PW = 3.4, PH = 4.4; // painting size
+
+      function frameLayer(w, h, depth, z, mat) {
+        var shape = new THREE.Shape();
+        shape.moveTo(-w / 2, -h / 2); shape.lineTo(w / 2, -h / 2); shape.lineTo(w / 2, h / 2); shape.lineTo(-w / 2, h / 2); shape.closePath();
+        var hole = new THREE.Path();
+        var iw = w - 0.5, ih = h - 0.5;
+        hole.moveTo(-iw / 2, -ih / 2); hole.lineTo(iw / 2, -ih / 2); hole.lineTo(iw / 2, ih / 2); hole.lineTo(-iw / 2, ih / 2); hole.closePath();
+        shape.holes.push(hole);
+        var geo = new THREE.ExtrudeGeometry(shape, { depth: depth, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3, curveSegments: 8 });
+        var m = new THREE.Mesh(geo, mat);
+        m.position.z = z;
+        m.castShadow = true; m.receiveShadow = true;
+        return m;
+      }
+
+      // three nested layers -> deep sculptural relief
+      var outer = frameLayer(PW + 0.9, PH + 0.9, 0.22, -0.10, goldMat);
+      var mid = frameLayer(PW + 0.55, PH + 0.55, 0.16, 0.05, goldMatDark);
+      var inner = frameLayer(PW + 0.22, PH + 0.22, 0.12, 0.14, goldMat);
+      paintingGroup.add(outer, mid, inner);
+
+      // carved corner ornaments (rosettes)
+      [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (sign) {
+        var rosette = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.075, 10, 20), goldMat);
+        rosette.position.set(sign[0] * (PW / 2 + 0.42), sign[1] * (PH / 2 + 0.42), 0.05);
+        rosette.castShadow = true;
+        paintingGroup.add(rosette);
+        var boss = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 12), goldMat);
+        boss.position.set(sign[0] * (PW / 2 + 0.42), sign[1] * (PH / 2 + 0.42), 0.2);
+        paintingGroup.add(boss);
+      });
+      // top crest ornament
+      var crest = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 0), goldMat);
+      crest.position.set(0, PH / 2 + 0.62, 0.05);
+      crest.castShadow = true;
+      paintingGroup.add(crest);
+
+      // the artwork itself (starts with placeholder; swapped for real image if PAINTING_IMAGE_SRC is set)
+      var ART_MAX_W = PW - 0.35, ART_MAX_H = PH - 0.35;
+      var artworkMat = new THREE.MeshStandardMaterial({ map: paintingTex, roughness: 0.95 });
+      var artwork = new THREE.Mesh(new THREE.PlaneGeometry(ART_MAX_W, ART_MAX_H), artworkMat);
+      artwork.position.z = 0.21;
+      artwork.receiveShadow = true;
+      paintingGroup.add(artwork);
+
+      if (PAINTING_IMAGE_SRC) {
+        new THREE.TextureLoader().load(PAINTING_IMAGE_SRC, function (tex) {
+          if (tex.encoding !== undefined && THREE.sRGBEncoding !== undefined) tex.encoding = THREE.sRGBEncoding;
+          var img = tex.image;
+          var srcAspect = img.width / img.height;
+          var frameAspect = ART_MAX_W / ART_MAX_H;
+          var w, h;
+          if (srcAspect > frameAspect) { w = ART_MAX_W; h = w / srcAspect; }
+          else { h = ART_MAX_H; w = h * srcAspect; }
+          artwork.geometry.dispose();
+          artwork.geometry = new THREE.PlaneGeometry(w, h);
+          artworkMat.map = tex;
+          artworkMat.needsUpdate = true;
+        }, undefined, function (err) {
+          console.warn('画像の読み込みに失敗したため、プレースホルダーを表示します。', err);
+        });
+      }
+
+      paintingGroup.position.set(0, 3.6, frameZ);
+      scene.add(paintingGroup);
+
+      /* plaque beneath the frame */
+      var plaque = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.53),
+        new THREE.MeshStandardMaterial({ map: plaqueTex, metalness: 0.6, roughness: 0.35 }));
+      plaque.position.set(0, 1.15, frameZ + 0.02);
+      scene.add(plaque);
+      var plaqueStand = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.06, 0.1), goldMatDark);
+      plaqueStand.position.set(0, 1.15 + 0.30, frameZ + 0.05);
+      scene.add(plaqueStand);
+
+      /* ============================================================
+         CEILING AMBIENT LIGHTS (no chandelier mesh — warm hall glow only)
+         ============================================================ */
+      var ceilingLight1 = new THREE.PointLight(0xffdca8, 1.4, 14, 2);
+      ceilingLight1.position.set(0, ROOM_H - 1.2, 1.5);
+      scene.add(ceilingLight1);
+
+      var ceilingLight2 = new THREE.PointLight(0xffcf99, 0.8, 10, 2);
+      ceilingLight2.position.set(0, ROOM_H - 1.8, -3);
+      scene.add(ceilingLight2);
+
+      var paintingRefl = paintingGroup.clone();
+      paintingRefl.traverse(function (o) { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.22; } });
+      reflectionGroup.add(paintingRefl);
+
+      /* ============================================================
+         LIGHTING
+         ============================================================ */
+      var ambient = new THREE.AmbientLight(0x2a1414, 0.55);
+      scene.add(ambient);
+
+      var hallWash = new THREE.PointLight(0x8a5a3a, 0.4, 18, 2);
+      hallWash.position.set(0, 4, 8);
+      scene.add(hallWash);
+
+      var spot = new THREE.SpotLight(0xffe9c4, 3.2, 22, Math.PI / 7.5, 0.55, 1.4);
+      spot.position.set(0, 7.6, 4.5);
+      spot.target = paintingGroup;
+      spot.castShadow = true;
+      spot.shadow.mapSize.set(1024, 1024);
+      spot.shadow.camera.near = 2;
+      spot.shadow.camera.far = 20;
+      spot.shadow.bias = -0.001;
+      scene.add(spot);
+      scene.add(spot.target);
+
+      /* dust motes floating within the spotlight beam */
+      var DUST_COUNT = 260;
+      var dustPositions = new Float32Array(DUST_COUNT * 3);
+      var dustVel = [];
+      for (var i = 0; i < DUST_COUNT; i++) {
+        var px = (Math.random() - 0.5) * 3.4;
+        var py = 1.0 + Math.random() * 6.0;
+        var pz = -6.5 + Math.random() * 6.5;
+        dustPositions[i * 3] = px; dustPositions[i * 3 + 1] = py; dustPositions[i * 3 + 2] = pz;
+        dustVel.push({ vy: 0.08 + Math.random() * 0.12, vx: (Math.random() - 0.5) * 0.05, phase: Math.random() * Math.PI * 2 });
+      }
+      var dustGeo = new THREE.BufferGeometry();
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+      var dustMat = new THREE.PointsMaterial({
+        size: 0.045, map: dustTex, transparent: true, opacity: 0.55,
+        blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+      });
+      var dust = new THREE.Points(dustGeo, dustMat);
+      scene.add(dust);
+
+      /* ============================================================
+         CINEMATIC CAMERA + ANIMATION LOOP
+         ============================================================ */
+      var clock = new THREE.Clock();
+      var enterTime = null;
+      var DOLLY_DURATION = reduceMotion ? 0.001 : 9.0;
+      var lookTarget = new THREE.Vector3(0, 3.3, frameZ);
+
+      function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+      function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      window.addEventListener('resize', onResize);
+
+      function animate() {
+        requestAnimationFrame(animate);
+        var t = clock.getElapsedTime();
+
+        // ceiling light gentle flicker (warm hall glow, no fixture)
+        var swayAmt = reduceMotion ? 0.35 : 1.0;
+        var flick = Math.sin(t * 9) * 0.15 + Math.sin(t * 23) * 0.08;
+        ceilingLight1.intensity = 1.4 + flick * swayAmt;
+
+        // spotlight subtle breathing
+        spot.intensity = 3.2 + Math.sin(t * 0.6) * 0.12;
+
+        // dust drift
+        var pos = dustGeo.attributes.position.array;
+        for (var i = 0; i < DUST_COUNT; i++) {
+          var v = dustVel[i];
+          pos[i * 3 + 1] += v.vy * 0.016;
+          pos[i * 3] += Math.sin(t * 0.5 + v.phase) * 0.0015;
+          if (pos[i * 3 + 1] > 7.5) { pos[i * 3 + 1] = 0.6; }
+        }
+        dustGeo.attributes.position.needsUpdate = true;
+
+        // camera cinematic dolly
+        if (enterTime !== null) {
+          var elapsed = (performance.now() - enterTime) / 1000;
+          var pct = Math.min(elapsed / DOLLY_DURATION, 1);
+          var e = easeOutCubic(pct);
+          camera.position.lerpVectors(CAM_START, CAM_END, e);
+          if (pct >= 1) {
+            camera.position.y = CAM_END.y + Math.sin(t * 0.18) * 0.035;
+            camera.position.x = CAM_END.x + Math.sin(t * 0.12) * 0.06;
+          }
+        } else {
+          camera.position.copy(CAM_START);
+          camera.position.y += Math.sin(t * 0.2) * 0.02;
+        }
+        camera.lookAt(lookTarget);
+
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      /* ============================================================
+         PROCEDURAL CLASSICAL BGM (Web Audio API — self-generated,
+         no copyrighted recordings; classic I-V-vi-IV progression)
+         ============================================================ */
+      var audioCtx = null, dryGain, wetGain, masterGain, musicOn = false;
+      var nextChordTime = 0, chordIndex = 0;
+      var chords = [
+        [261.63, 329.63, 392.00, 523.25],  // C major
+        [196.00, 246.94, 293.66, 392.00],  // G major
+        [220.00, 261.63, 329.63, 440.00],  // A minor
+        [174.61, 220.00, 261.63, 349.23]   // F major
+      ];
+      var chordInterval = 3.8;
+
+      function createReverb(ctx, duration, decay) {
+        var rate = ctx.sampleRate;
+        var length = Math.floor(rate * duration);
+        var impulse = ctx.createBuffer(2, length, rate);
+        for (var ch = 0; ch < 2; ch++) {
+          var data = impulse.getChannelData(ch);
+          for (var i = 0; i < length; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+          }
+        }
+        var conv = ctx.createConvolver();
+        conv.buffer = impulse;
+        return conv;
+      }
+
+      function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.5;
+        dryGain = audioCtx.createGain(); dryGain.gain.value = 0.55;
+        wetGain = audioCtx.createGain(); wetGain.gain.value = 0.5;
+        var reverb = createReverb(audioCtx, 3.2, 2.2);
+        dryGain.connect(masterGain);
+        wetGain.connect(reverb); reverb.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+      }
+
+      function playNote(freq, time, dur, vol, type) {
+        var osc = audioCtx.createOscillator();
+        osc.type = type || 'triangle';
+        osc.frequency.value = freq;
+        var gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.linearRampToValueAtTime(vol, time + 0.4);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+        var filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass'; filter.frequency.value = 1800;
+        osc.connect(filter); filter.connect(gain);
+        gain.connect(dryGain); gain.connect(wetGain);
+        osc.start(time); osc.stop(time + dur + 0.2);
+      }
+
+      function playChord(freqs, startTime) {
+        freqs.forEach(function (freq, i) {
+          playNote(freq, startTime + i * 0.28, 3.0, 0.045, 'triangle');
+        });
+        playNote(freqs[0] / 2, startTime, chordInterval, 0.028, 'sine');
+      }
+
+      function scheduleMusic() {
+        if (!musicOn) return;
+        while (nextChordTime < audioCtx.currentTime + 2.0) {
+          playChord(chords[chordIndex % chords.length], nextChordTime);
+          chordIndex++;
+          nextChordTime += chordInterval;
+        }
+        setTimeout(scheduleMusic, 400);
+      }
+
+      function startMusic() {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (musicOn) return;
+        musicOn = true;
+        nextChordTime = audioCtx.currentTime + 0.2;
+        scheduleMusic();
+      }
+
+      /* ============================================================
+         直接スタート(入口画面なし):ページ読み込み後すぐに
+         カメラのシネマティック演出とBGMを開始する
+         ============================================================ */
+      var hint = document.getElementById('hint');
+      hint.classList.add('show');
+      enterTime = performance.now();
+      startMusic();
+
+      // 多くのブラウザはユーザー操作なしの音声自動再生をブロックするため、
+      // 最初のクリック/キー操作/タップでこっそり再開できるようにしておく
+      // (見た目上は最初から自動再生している演出のまま)
+      var unlockAudio = function () {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+      };
+      window.addEventListener('click', unlockAudio);
+      window.addEventListener('keydown', unlockAudio);
+      window.addEventListener('touchstart', unlockAudio);
+
+    })();
+  </script>
+</body>
+
+</html>

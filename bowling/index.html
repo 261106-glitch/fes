@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>🎳 ボウリング - スタンプラリー</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="bowling.css">
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animated">
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+  </div>
+
+  <!-- Game Header -->
+  <div class="game-header-fixed">
+    <a href="../index.html" class="back-btn" id="backBtn">←</a>
+    <div class="game-title">🎳 ボウリング</div>
+    <div class="hud-scores">
+      <div class="hud-throw">
+        <span class="hud-label">投球</span>
+        <span class="hud-value" id="throwDisplay">1 / 2</span>
+      </div>
+      <div class="hud-pins">
+        <span class="hud-label">倒したピン</span>
+        <span class="hud-value hud-value--score" id="scoreDisplay">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Instruction Overlay -->
+  <div class="modal-overlay" id="instructionOverlay">
+    <div class="modal-content instruction-modal">
+      <span class="modal-icon">🎳</span>
+      <h2 class="modal-title">あそびかた</h2>
+      <div class="instruction-steps">
+        <div class="instruction-step">
+          <div class="instruction-icon">👆</div>
+          <p>ボールを<strong>上にスワイプ</strong>して投げよう！</p>
+        </div>
+        <div class="instruction-step">
+          <div class="instruction-icon">↗️</div>
+          <p>スワイプの<strong>方向</strong>でボールの角度が変わるよ</p>
+        </div>
+        <div class="instruction-step">
+          <div class="instruction-icon">⚡</div>
+          <p>スワイプの<strong>速さ</strong>でボールのスピードが変わるよ</p>
+        </div>
+        <div class="instruction-step">
+          <div class="instruction-icon">🏆</div>
+          <p><strong>7本以上</strong>倒せばクリア！（2回投球できるよ）</p>
+        </div>
+      </div>
+      <button class="btn btn--primary btn--full mt-lg" id="startBtn">ゲームスタート！</button>
+    </div>
+  </div>
+
+  <!-- Result Modal -->
+  <div class="modal-overlay hidden" id="resultOverlay">
+    <div class="modal-content">
+      <span class="modal-icon" id="resultIcon">🎉</span>
+      <h2 class="modal-title" id="resultTitle">クリア！</h2>
+      <p class="modal-subtitle" id="resultSubtitle">10本中 8本 倒した！</p>
+      <div class="result-score-display">
+        <span class="result-score-number" id="resultScore">8</span>
+        <span class="result-score-label">/ 10 ピン</span>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--primary btn--full" id="retryBtn">もう一度あそぶ</button>
+        <button class="btn btn--outline btn--full" id="rallyBtn">スタンプラリーに戻る</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/stamp-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="bowling.js"></script>
+</body>
+</html>

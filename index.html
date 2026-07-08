@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="学校イベント スタンプラリー - 3つのゲームをクリアしてスタンプを集めよう！">
+  <title>🎮 スタンプラリー</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* === Top Page Specific === */
+    .hero {
+      text-align: center;
+      padding: var(--space-xl) 0 var(--space-md);
+      width: 100%;
+    }
+
+    .hero-emoji {
+      font-size: 3.5rem;
+      display: block;
+      margin-bottom: var(--space-md);
+      animation: heroFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes heroFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .progress-bar-wrap {
+      width: 100%;
+      margin-top: var(--space-lg);
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-sm);
+    }
+
+    .progress-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .progress-count {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--neon-green);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
+      border-radius: var(--radius-full);
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px var(--neon-green-glow);
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+      padding-left: var(--space-xs);
+    }
+
+    .footer-area {
+      margin-top: auto;
+      padding-top: var(--space-xl);
+      text-align: center;
+      width: 100%;
+    }
+
+    .reset-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-family);
+      font-size: 0.75rem;
+      cursor: pointer;
+      padding: var(--space-sm) var(--space-md);
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
+    }
+
+    .reset-btn:hover {
+      color: var(--neon-pink);
+      background: rgba(255, 107, 157, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animated">
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+  </div>
+
+  <div class="page-container">
+    <!-- Hero -->
+    <div class="hero animate-fade-in-up">
+      <span class="hero-emoji">🎪</span>
+      <h1 class="neon-title neon-title--gradient">スタンプラリー</h1>
+      <p class="subtitle">3つのゲームをクリアしてスタンプを集めよう！</p>
+
+      <!-- Progress Bar -->
+      <div class="progress-bar-wrap mt-lg">
+        <div class="progress-info">
+          <span class="progress-label">進捗</span>
+          <span class="progress-count" id="progressCount">0 / 3</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stamp Grid -->
+    <div class="mt-xl w-full animate-fade-in-up stagger-2">
+      <div class="section-label">ゲーム一覧</div>
+      <div class="stamp-grid" id="stampGrid">
+        <!-- Bowling -->
+        <a href="bowling/index.html" class="glass-card glass-card--interactive stamp-card" id="card-bowling">
+          <div class="stamp-icon-wrap">
+            <div class="stamp-icon stamp-icon--locked" id="icon-bowling">🎳</div>
+          </div>
+          <div class="stamp-info">
+            <div class="stamp-name">ボーリング</div>
+            <div class="stamp-status" id="status-bowling">未クリア</div>
+          </div>
+          <span class="stamp-arrow">›</span>
+        </a>
+
+        <!-- Crane -->
+        <a href="crane/index.html" class="glass-card glass-card--interactive stamp-card" id="card-crane">
+          <div class="stamp-icon-wrap">
+            <div class="stamp-icon stamp-icon--locked" id="icon-crane">🏗️</div>
+          </div>
+          <div class="stamp-info">
+            <div class="stamp-name">クレーンゲーム</div>
+            <div class="stamp-status" id="status-crane">未クリア</div>
+          </div>
+          <span class="stamp-arrow">›</span>
+        </a>
+
+        <!-- Mystery -->
+        <a href="mystery/index.html" class="glass-card glass-card--interactive stamp-card" id="card-mystery"
+           onclick="event.preventDefault(); alert('教室にあるQRコードを探してスキャンしてね！📱');">
+          <div class="stamp-icon-wrap">
+            <div class="stamp-icon stamp-icon--locked" id="icon-mystery">🔍</div>
+          </div>
+          <div class="stamp-info">
+            <div class="stamp-name">謎解き</div>
+            <div class="stamp-status" id="status-mystery">QRコードからアクセス</div>
+          </div>
+          <span class="stamp-arrow">›</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Completion Banner (hidden by default) -->
+    <div class="glass-card completion-banner mt-xl hidden" id="completionBanner">
+      <span class="trophy">🏆</span>
+      <h2>コンプリート！</h2>
+      <p>すべてのスタンプを集めました！<br>おめでとうございます！🎉</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-area animate-fade-in stagger-4">
+      <button class="reset-btn" id="resetBtn" onclick="handleReset()">🔄 データリセット</button>
+    </div>
+  </div>
+
+  <script src="js/stamp-manager.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    /** スタンプUIを更新 */
+    function updateStampUI() {
+      const stamps = StampManager.getStamps();
+      const games = ['bowling', 'crane', 'mystery'];
+      const colorClasses = {
+        bowling: 'stamp-icon--bowling',
+        crane: 'stamp-icon--crane',
+        mystery: 'stamp-icon--mystery'
+      };
+      const completedTexts = {
+        bowling: 'クリア済み ✓',
+        crane: 'クリア済み ✓',
+        mystery: 'クリア済み ✓'
+      };
+
+      let completedCount = 0;
+
+      games.forEach(gameId => {
+        const icon = document.getElementById(`icon-${gameId}`);
+        const status = document.getElementById(`status-${gameId}`);
+        const card = document.getElementById(`card-${gameId}`);
+
+        if (stamps[gameId].completed) {
+          completedCount++;
+          // スタンプ取得済みの見た目
+          icon.classList.remove('stamp-icon--locked');
+          icon.classList.add(colorClasses[gameId]);
+          status.textContent = completedTexts[gameId];
+          status.classList.add('stamp-status--completed');
+
+          // チェックマーク追加
+          if (!icon.parentElement.querySelector('.stamp-check')) {
+            const check = document.createElement('div');
+            check.className = 'stamp-check';
+            check.textContent = '✓';
+            icon.parentElement.appendChild(check);
+          }
+
+          // 謎解きカードのクリック動作を変更（クリア済みなら普通にリンク）
+          if (gameId === 'mystery') {
+            card.onclick = null;
+          }
+        }
+      });
+
+      // プログレスバー更新
+      document.getElementById('progressCount').textContent = `${completedCount} / 3`;
+      document.getElementById('progressFill').style.width = `${(completedCount / 3) * 100}%`;
+
+      // 全クリア
+      if (completedCount === 3) {
+        document.getElementById('completionBanner').classList.remove('hidden');
+        // 少し遅延して紙吹雪表示（初回のみ）
+        if (!sessionStorage.getItem('confettiShown')) {
+          setTimeout(() => {
+            showConfetti(4000, 80);
+            vibrate([100, 50, 100, 50, 200]);
+            sessionStorage.setItem('confettiShown', 'true');
+          }, 600);
+        }
+      }
+    }
+
+    /** データリセット */
+    function handleReset() {
+      if (confirm('スタンプデータをリセットしますか？')) {
+        StampManager.reset();
+        sessionStorage.removeItem('confettiShown');
+        location.reload();
+      }
+    }
+
+    // 初期化
+    document.addEventListener('DOMContentLoaded', updateStampUI);
+  </script>
+</body>
+</html>

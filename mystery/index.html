@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="謎解きクリアページ - QRコードからのアクセス限定">
+  <title>🔍 謎解き</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* === Mystery Page Specific === */
+
+    /* Success Screen */
+    .success-screen {
+      text-align: center;
+      padding: var(--space-2xl) 0;
+      width: 100%;
+    }
+
+    .treasure-box {
+      font-size: 6rem;
+      display: block;
+      margin-bottom: var(--space-lg);
+      animation: treasureOpen 1s ease-in-out;
+    }
+
+    @keyframes treasureOpen {
+      0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+      50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .success-title {
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: var(--space-sm);
+      background: linear-gradient(135deg, var(--neon-green), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .success-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin-bottom: var(--space-xl);
+      line-height: 1.8;
+    }
+
+    .stamp-earned {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      padding: 12px 24px;
+      background: linear-gradient(135deg, rgba(0, 245, 160, 0.15), rgba(0, 212, 255, 0.15));
+      border: 1px solid rgba(0, 245, 160, 0.3);
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      color: var(--neon-green);
+      font-size: 0.95rem;
+      animation: fadeInScale 0.5s ease 0.5s both;
+    }
+
+    .stamp-earned::before {
+      content: '✅';
+      font-size: 1.2rem;
+    }
+
+    .sparkle-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      animation: sparkleFade 1.5s ease-out forwards;
+    }
+
+    @keyframes sparkleFade {
+      0% { transform: scale(0); opacity: 1; }
+      50% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+
+    .already-cleared {
+      text-align: center;
+      padding: var(--space-2xl) 0;
+    }
+
+    .already-cleared .icon {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: var(--space-md);
+    }
+
+    .already-cleared h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--neon-green);
+      margin-bottom: var(--space-sm);
+    }
+
+    .already-cleared p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: var(--space-xl);
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animated">
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+  </div>
+
+  <div class="page-container">
+    <!-- Game Header -->
+    <div class="game-header animate-fade-in">
+      <a href="../index.html" class="back-btn" id="backBtn">←</a>
+      <h1 class="game-title">🔍 謎解き</h1>
+    </div>
+
+    <!-- Access Denied Screen (not used) -->
+
+    <!-- Success Screen -->
+    <div class="success-screen" id="successScreen" style="display: none;">
+      <span class="treasure-box">🎁</span>
+      <h2 class="success-title">謎解きクリア！</h2>
+      <p class="success-subtitle">
+        おめでとう！🎉<br>
+        QRコードを見つけたね！<br>
+        スタンプをゲットしました！
+      </p>
+      <div class="stamp-earned">謎解きスタンプ獲得！</div>
+      <div class="mt-2xl">
+        <a href="../index.html" class="btn btn--green btn--large btn--full">
+          🏠 スタンプラリーに戻る
+        </a>
+      </div>
+    </div>
+
+    <!-- Already Cleared Screen -->
+    <div class="already-cleared" id="alreadyCleared" style="display: none;">
+      <span class="icon">✨</span>
+      <h2>クリア済みです！</h2>
+      <p>謎解きスタンプは既に獲得済みです。</p>
+      <a href="../index.html" class="btn btn--outline btn--full">🏠 スタンプラリーに戻る</a>
+    </div>
+  </div>
+
+  <!-- Sparkles -->
+  <div class="sparkle-container" id="sparkleContainer"></div>
+
+  <script src="../js/stamp-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+
+    function showSparkles() {
+      const container = document.getElementById('sparkleContainer');
+      const colors = ['#00f5a0', '#00d4ff', '#ffd700', '#7b68ee', '#ff6b9d'];
+      
+      for (let i = 0; i < 30; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.animationDelay = Math.random() * 1 + 's';
+        sparkle.style.width = (Math.random() * 6 + 4) + 'px';
+        sparkle.style.height = sparkle.style.width;
+        container.appendChild(sparkle);
+      }
+
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 3000);
+    }
+
+    function init() {
+      // 既にクリア済みかチェック
+      if (StampManager.isCompleted('mystery')) {
+        document.getElementById('alreadyCleared').style.display = 'block';
+        return;
+      }
+
+      // サイトに入った時点でスタンプ付与
+      StampManager.addStamp('mystery');
+      document.getElementById('successScreen').style.display = 'block';
+
+      // エフェクト
+      setTimeout(() => {
+        showSparkles();
+        showConfetti(3000, 60);
+        vibrate([100, 50, 100, 50, 200]);
+      }, 500);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

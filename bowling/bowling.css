@@ -1,0 +1,203 @@
+/* ============================================
+   🎳 Bowling Game - Styles
+   ============================================ */
+
+/* --- Layout --- */
+.game-header-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(10, 10, 26, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.game-header-fixed .back-btn {
+  width: 38px;
+  height: 38px;
+  font-size: 1.1rem;
+}
+
+.game-header-fixed .game-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hud-scores {
+  display: flex;
+  gap: var(--space-md);
+  margin-left: auto;
+}
+
+.hud-throw,
+.hud-pins {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.hud-label {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.hud-value {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.hud-value--score {
+  background: linear-gradient(135deg, var(--neon-yellow), var(--neon-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.2rem;
+}
+
+/* --- Canvas --- */
+#gameCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  touch-action: none;
+}
+
+/* --- Instruction Modal --- */
+.instruction-modal {
+  max-width: 340px;
+}
+
+.instruction-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  text-align: left;
+}
+
+.instruction-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.instruction-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.instruction-step p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.instruction-step strong {
+  color: var(--neon-cyan);
+  font-weight: 700;
+}
+
+/* --- Result Modal --- */
+.result-score-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+  padding: var(--space-md);
+  background: var(--glass-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+}
+
+.result-score-number {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--neon-yellow), var(--neon-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.result-score-label {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* --- Swipe guide indicator on canvas --- */
+.swipe-guide {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+  text-align: center;
+  animation: swipeGuideFloat 2s ease-in-out infinite;
+}
+
+.swipe-guide-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+@keyframes swipeGuideFloat {
+  0%, 100% { opacity: 0.6; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 1; transform: translateX(-50%) translateY(-8px); }
+}
+
+/* --- Overlay z-index fix --- */
+.modal-overlay {
+  z-index: 50;
+}
+
+/* --- Ball trail glow (drawn on canvas, but we can add some css juice) --- */
+@keyframes pinScatter {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+/* --- Score animation --- */
+@keyframes scoreFlash {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); color: var(--neon-yellow); }
+  100% { transform: scale(1); }
+}
+
+.score-flash {
+  animation: scoreFlash 0.4s ease;
+}
+
+/* --- Responsive tweaks --- */
+@media (min-height: 700px) {
+  .instruction-steps {
+    gap: var(--space-lg);
+  }
+}
