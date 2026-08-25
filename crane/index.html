@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🏗️ クレーンゲーム</title>
+  <title>🧲 クレーンゲーム</title>
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="crane.css">
 </head>
+
 <body>
   <!-- Animated Background -->
   <div class="bg-animated">
@@ -18,8 +20,8 @@
   <div class="page-container">
     <!-- Header -->
     <div class="game-header">
-      <a href="../index.html" class="back-btn" onclick="event.preventDefault(); navigateTo('../index.html');">←</a>
-      <div class="game-title">🏗️ クレーンゲーム</div>
+      <a href="javascript:void(0)" class="back-btn disabled-link" id="backBtn" title="スコア保存後に利用可能">←</a>
+      <div class="game-title">🧲 クレーンゲーム</div>
       <div class="attempt-counter" id="attemptCounter">残り: <span id="attemptsLeft">3</span>回</div>
     </div>
 
@@ -83,7 +85,7 @@
   <!-- Instructions Overlay -->
   <div class="modal-overlay" id="instructionsOverlay">
     <div class="modal-content">
-      <span class="modal-icon">🏗️</span>
+      <span class="modal-icon">🧲</span>
       <h2 class="modal-title">クレーンゲーム</h2>
       <p class="modal-subtitle">
         クレーンが左右に動いています。<br>
@@ -112,8 +114,35 @@
     </div>
   </div>
 
+  <!-- Riddle Overlay (Shown only on first play before game) -->
+  <div class="modal-overlay hidden" id="riddleOverlay">
+    <div class="modal-content riddle-modal">
+      <span class="modal-icon">❓</span>
+      <h2 class="modal-title">クレーン なぞなぞ</h2>
+      <p class="modal-subtitle">正解するとゲームがスタートできるよ！</p>
+
+      <div class="riddle-question-box" id="riddleQuestion">
+ 吉田学園北海道<br>サイバークリエイターズ大学校の<br>改名前の名前は何でしょう？
+      </div>
+
+      <div class="riddle-options-grid" id="riddleOptions">
+        <button class="riddle-option-btn" data-index="0">1. 情報ビジネス専門学校</button>
+        <button class="riddle-option-btn" data-index="1">2. エリート情報大学校</button>
+        <button class="riddle-option-btn" data-index="2">3. サイバークリエイターズ大学</button>
+        <button class="riddle-option-btn" data-index="3">4. IT未来専門学校</button>
+      </div>
+
+      <!-- Feedback Area -->
+      <div class="riddle-feedback hidden" id="riddleFeedback"></div>
+
+      <button class="btn btn--primary btn--full mt-md hidden" id="riddleProceedBtn">ゲームへ進む！🧲</button>
+    </div>
+  </div>
+
   <script src="../js/stamp-manager.js"></script>
+  <script src="../js/user-manager.js"></script>
   <script src="../js/common.js"></script>
   <script src="crane.js"></script>
 </body>
+
 </html>

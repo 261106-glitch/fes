@@ -47,6 +47,8 @@
   let swipeEnd = null;
   let animFrameId = null;
   let settleTimer = 0;
+  let isStrike = false;  // 1投目で全ピン倒し
+  let isSpare  = false;  // 2投目で全ピン倒し
 
   // Guide arrow animation
   let guideArrowAnim = 0;
@@ -64,6 +66,12 @@
   const resultSubtitle = document.getElementById('resultSubtitle');
   const resultScore = document.getElementById('resultScore');
   const backBtn = document.getElementById('backBtn');
+
+  // Riddle Elements
+  const riddleOverlay = document.getElementById('riddleOverlay');
+  const riddleFeedback = document.getElementById('riddleFeedback');
+  const riddleProceedBtn = document.getElementById('riddleProceedBtn');
+  const riddleOptions = document.querySelectorAll('.riddle-option-btn');
 
   // ==========================================
   // Initialization
@@ -88,14 +96,90 @@
     // Buttons
     startBtn.addEventListener('click', startGame);
     retryBtn.addEventListener('click', restartGame);
-    rallyBtn.addEventListener('click', () => navigateTo('../index.html'));
+    rallyBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!UserManager.hasScore('bowling')) {
+        alert('スコアが保存されるまでホームには戻れません！🎳');
+        return;
+      }
+      navigateTo('../index.html');
+    });
+    
+    // ホームへのURL制限：スコアが保存されるまでは戻れない
     backBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      if (!UserManager.hasScore('bowling')) {
+        alert('スコアが保存されるまでホームには戻れません！🎳');
+        return;
+      }
       navigateTo('../index.html');
     });
 
+    // 戻るボタンの表示・無効化状態を更新
+    updateBackBtnState();
+
+    // なぞなぞの初期化
+    initRiddle();
+
     // Start render loop
     render();
+  }
+
+  function updateBackBtnState() {
+    if (UserManager.hasScore('bowling')) {
+      backBtn.classList.remove('disabled-link');
+      backBtn.removeAttribute('style');
+    } else {
+      backBtn.classList.add('disabled-link');
+      backBtn.style.opacity = '0.3';
+      backBtn.style.pointerEvents = 'none';
+    }
+  }
+
+  // ==========================================
+  // Riddle Handling
+  // ==========================================
+  function initRiddle() {
+    // 既に初回なぞなぞをクリア済みなら何もしない（あそびかた画面のまま）
+    if (UserManager.isRiddleDone('bowling')) {
+      return;
+    }
+
+    // 初回プレイ：あそびかたを隠してなぞなぞを表示
+    instructionOverlay.classList.add('hidden');
+    riddleOverlay.classList.remove('hidden');
+
+    const correctAnswerIndex = 1; // 2. ９校
+
+    riddleOptions.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const selected = parseInt(btn.getAttribute('data-index'), 10);
+        if (selected === correctAnswerIndex) {
+          // 正解
+          vibrate([50, 50, 100]);
+          riddleFeedback.className = 'riddle-feedback riddle-feedback--success';
+          riddleFeedback.innerHTML = '🎉 <strong>正解！</strong><br>大学: 1校（札幌保健医療大学）<br>専門学校・大学校: 9校<br>保育園: 3園（さくら、くりの木、やしの木）';
+          riddleFeedback.classList.remove('hidden');
+          
+          // 選択肢を無効化
+          riddleOptions.forEach(b => b.disabled = true);
+          
+          // 「ゲームへ進む」ボタン表示
+          riddleProceedBtn.classList.remove('hidden');
+          riddleProceedBtn.onclick = () => {
+            UserManager.setRiddleDone('bowling');
+            riddleOverlay.classList.add('hidden');
+            instructionOverlay.classList.remove('hidden');
+          };
+        } else {
+          // 不正解
+          vibrate(100);
+          riddleFeedback.className = 'riddle-feedback riddle-feedback--error';
+          riddleFeedback.innerHTML = '❌ <strong>ざんねん！不正解…</strong><br>もう一度考えて選んでね！';
+          riddleFeedback.classList.remove('hidden');
+        }
+      });
+    });
   }
 
   function resizeCanvas() {
@@ -139,6 +223,8 @@
     throwCount = 0;
     totalKnocked = 0;
     firstThrowKnocked = 0;
+    isStrike = false;
+    isSpare  = false;
     gameState = 'waiting';
     ballTrail = [];
     updateHUD();
@@ -461,11 +547,21 @@
       // 1投目：倒れたピン数を記録
       firstThrowKnocked = knockedThisThrow;
       totalKnocked = knockedThisThrow;
+
+      // ストライク判定
+      if (knockedThisThrow >= TOTAL_PINS) {
+        isStrike = true;
+        showStrikeEffect();
+      }
     } else {
       // 2投目：残りピンのうち倒れた数を1投目の合計に加算
-      // （2投目開始時にpinsは残存ピンのみにリセットされているので
-      //   knockedThisThrow = 2投目で倒した数）
       totalKnocked = firstThrowKnocked + knockedThisThrow;
+
+      // スペア判定（ストライクでなく2投目で全ピン）
+      if (!isStrike && totalKnocked >= TOTAL_PINS) {
+        isSpare = true;
+        showSpareEffect();
+      }
     }
 
     throwCount++;
@@ -474,7 +570,7 @@
     // 1投目でストライク（全ピン倒した）か、2投が終わったらゲーム終了
     if (totalKnocked >= TOTAL_PINS || throwCount >= MAX_THROWS) {
       gameState = 'done';
-      setTimeout(showResult, 600);
+      setTimeout(showResult, 1000);
     } else {
       // 2投目へ：倒れたピンを除いた残存ピンで続行
       gameState = 'waiting';
@@ -482,6 +578,57 @@
       createBall();
       ballTrail = [];
     }
+  }
+
+  // ==========================================
+  // Strike / Spare Effects
+  // ==========================================
+  function showStrikeEffect() {
+    vibrate([100, 30, 100, 30, 200]);
+    showBigText('STRIKE! 🎳', '#ff6b35', '#ffd700');
+  }
+
+  function showSpareEffect() {
+    vibrate([80, 40, 80]);
+    showBigText('SPARE! ✨', '#00d4ff', '#7b68ee');
+  }
+
+  // 画面中央に大きなテキストをフラッシュ
+  function showBigText(text, color1, color2) {
+    const el = document.createElement('div');
+    el.textContent = text;
+    Object.assign(el.style, {
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%) scale(0.5)',
+      zIndex: '100',
+      fontFamily: 'var(--font-family, sans-serif)',
+      fontSize: 'clamp(2.5rem, 12vw, 5rem)',
+      fontWeight: '900',
+      letterSpacing: '0.05em',
+      background: `linear-gradient(135deg, ${color1}, ${color2})`,
+      webkitBackgroundClip: 'text',
+      webkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      filter: `drop-shadow(0 0 20px ${color1})`,
+      pointerEvents: 'none',
+      transition: 'transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275), opacity 0.3s ease',
+      opacity: '0',
+    });
+    document.body.appendChild(el);
+
+    // ポップイン
+    requestAnimationFrame(() => {
+      el.style.transform = 'translate(-50%, -50%) scale(1.1)';
+      el.style.opacity = '1';
+    });
+    // フェードアウト
+    setTimeout(() => {
+      el.style.transform = 'translate(-50%, -50%) scale(1.3)';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 400);
+    }, 900);
   }
 
   // ==========================================
@@ -500,25 +647,76 @@
   // Result
   // ==========================================
   function showResult() {
+    // 初回スコア保存（初回のみ保存される）
+    UserManager.saveScore('bowling', totalKnocked);
+    updateBackBtnState();
+
     const cleared = totalKnocked >= CLEAR_THRESHOLD;
 
     if (cleared) {
-      resultIcon.textContent = '🎉';
-      resultTitle.textContent = totalKnocked >= TOTAL_PINS ? 'ストライク！！' : 'クリア！';
-      resultSubtitle.textContent = totalKnocked >= TOTAL_PINS
-        ? '全ピン倒した！すごい！🎳'
-        : `${TOTAL_PINS}本中 ${totalKnocked}本 倒した！`;
-      resultScore.textContent = totalKnocked;
+      if (isStrike) {
+        // ストライク！
+        resultIcon.textContent = '🎳';
+        resultTitle.textContent = 'ストライク！！！';
+        resultTitle.style.background = 'linear-gradient(135deg, #ff6b35, #ffd700)';
+        resultTitle.style.webkitBackgroundClip = 'text';
+        resultTitle.style.webkitTextFillColor  = 'transparent';
+        resultTitle.style.backgroundClip = 'text';
+        resultSubtitle.textContent = '🔥 1投目で全ピン倒し！パーフェクト！';
+        resultScore.textContent = totalKnocked;
+        resultScore.style.background = 'linear-gradient(135deg, #ff6b35, #ffd700)';
+        resultScore.style.webkitBackgroundClip = 'text';
+        resultScore.style.webkitTextFillColor  = 'transparent';
+        resultScore.style.backgroundClip = 'text';
 
-      // Award stamp
-      StampManager.addStamp('bowling');
-      showConfetti(3000, 80);
-      vibrate([100, 50, 100, 50, 200]);
+        StampManager.addStamp('bowling');
+        showConfetti(4000, 100);
+        vibrate([100, 30, 100, 30, 200, 50, 200]);
+
+      } else if (isSpare) {
+        // スペア！
+        resultIcon.textContent = '✨';
+        resultTitle.textContent = 'スペア！！';
+        resultTitle.style.background = 'linear-gradient(135deg, #00d4ff, #7b68ee)';
+        resultTitle.style.webkitBackgroundClip = 'text';
+        resultTitle.style.webkitTextFillColor  = 'transparent';
+        resultTitle.style.backgroundClip = 'text';
+        resultSubtitle.textContent = '❤️ 2投目で全ピン倒し！すごい！';
+        resultScore.textContent = totalKnocked;
+        resultScore.style.background = 'linear-gradient(135deg, #00d4ff, #7b68ee)';
+        resultScore.style.webkitBackgroundClip = 'text';
+        resultScore.style.webkitTextFillColor  = 'transparent';
+        resultScore.style.backgroundClip = 'text';
+
+        StampManager.addStamp('bowling');
+        showConfetti(3000, 80);
+        vibrate([100, 50, 100, 50, 200]);
+
+      } else {
+        // クリア（全ピンでないが閾値以上）
+        resultIcon.textContent = '🎉';
+        resultTitle.textContent = 'クリア！';
+        resultTitle.style.background = 'linear-gradient(135deg, var(--neon-green), var(--neon-cyan))';
+        resultTitle.style.webkitBackgroundClip = 'text';
+        resultTitle.style.webkitTextFillColor  = 'transparent';
+        resultTitle.style.backgroundClip = 'text';
+        resultSubtitle.textContent = `${TOTAL_PINS}本中 ${totalKnocked}本 倒した！`;
+        resultScore.textContent = totalKnocked;
+
+        StampManager.addStamp('bowling');
+        showConfetti(3000, 80);
+        vibrate([100, 50, 100, 50, 200]);
+      }
+
     } else {
       resultIcon.textContent = '😢';
       resultTitle.textContent = 'おしい！';
+      resultTitle.style.background = '';
+      resultTitle.style.webkitTextFillColor = '';
       resultSubtitle.textContent = `${totalKnocked}本しか倒せなかった… ${CLEAR_THRESHOLD}本以上でクリア！`;
       resultScore.textContent = totalKnocked;
+      resultScore.style.background = '';
+      resultScore.style.webkitTextFillColor = '';
       vibrate(100);
     }
 

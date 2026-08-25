@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>確率設定付きルーレット</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      text-align: center;
+      background: #0f172a;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 20px auto;
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      margin: 20px auto;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    }
+
+    button {
+      padding: 15px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #ff4757, #ff6b81);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+      transition: transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    /* 当選ポップアップ演出 */
+    #modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal-content {
+      background: #1e293b;
+      padding: 40px;
+      border-radius: 20px;
+      border: 2px solid #f59e0b;
+      text-align: center;
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .modal-content h1 {
+      font-size: 48px;
+      color: #f59e0b;
+      margin: 10px 0;
+      text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
+
+    @keyframes popIn {
+      0% {
+        transform: scale(0);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    #confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 99;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h2>景品ルーレット</h2>
+    <canvas id="wheel" width="340" height="340"></canvas>
+    <button onclick="spin()">SPIN!</button>
+  </div>
+
+  <div id="modal" onclick="closeModal()">
+    <div class="modal-content">
+      <p style="margin:0; font-size: 18px;">🎉 WINNER! 🎉</p>
+      <h1 id="winner-text">-</h1>
+      <p style="font-size: 12px; color: #94a3b8;">クリックで閉じる</p>
+    </div>
+  </div>
+  <canvas id="confetti"></canvas>
+
+  <script>
+    // ==========================================
+    // ⚙️ 項目・確率（重み）のコード設定
+    // ==========================================
+    // weight の数値が大きいほど当たる確率と扇の面積が大きくなります
+    const ITEMS = [
+      { name: "ハーゲンダッツ", weight: 1, color: "#f59e0b" },
+      { name: "ガブリチュウ", weight: 3, color: "#ec4899" },
+      { name: "マルシアンカ", weight: 6, color: "#3b82f6" },
+      { name: "チューペット", weight: 10, color: "#10b981" },
+      { name: "うまい棒", weight: 4, color: "#64748b" }
+
+    ];
+
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const totalWeight = ITEMS.reduce((sum, item) => sum + item.weight, 0);
+    let currentAngle = 0;
+    let isSpinning = false;
+
+    // ルーレット描画
+    function drawWheel() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let startAngle = currentAngle;
+
+      ITEMS.forEach((item) => {
+        const sliceAngle = (item.weight / totalWeight) * 2 * Math.PI;
+        const endAngle = startAngle + sliceAngle;
+
+        ctx.beginPath();
+        ctx.moveTo(170, 170);
+        ctx.arc(170, 170, 160, startAngle, endAngle);
+        ctx.fillStyle = item.color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#1e293b";
+        ctx.stroke();
+
+        // テキスト描画
+        ctx.save();
+        ctx.translate(170, 170);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 15px sans-serif";
+        ctx.fillText(item.name, 140, 5);
+        ctx.restore();
+
+        startAngle = endAngle;
+      });
+
+      // 上部ポインター
+      ctx.beginPath();
+      ctx.moveTo(170, 0); ctx.lineTo(155, 25); ctx.lineTo(185, 25);
+      ctx.closePath();
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+    }
+
+    // 回転処理
+    function spin() {
+      if (isSpinning) return;
+      isSpinning = true;
+
+      let speed = Math.random() * 0.3 + 0.5;
+      function animate() {
+        if (speed <= 0.0015) {
+          isSpinning = false;
+          showWinner();
+          return;
+        }
+        currentAngle += speed;
+        speed *= 0.985;
+        drawWheel();
+        requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    // 当選判定と演出発動
+    function showWinner() {
+      const normalizedAngle = (1.5 * Math.PI - (currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      let accumulatedAngle = 0;
+      let winner = ITEMS[0].name;
+
+      for (let item of ITEMS) {
+        const sliceAngle = (item.weight / totalWeight) * 2 * Math.PI;
+        if (normalizedAngle >= accumulatedAngle && normalizedAngle < accumulatedAngle + sliceAngle) {
+          winner = item.name;
+          break;
+        }
+        accumulatedAngle += sliceAngle;
+      }
+
+      document.getElementById('winner-text').innerText = winner;
+      document.getElementById('modal').style.display = 'flex';
+      triggerConfetti();
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    // 紙吹雪エフェクト
+    function triggerConfetti() {
+      const c = document.getElementById('confetti');
+      const cx = c.getContext('2d');
+      c.width = window.innerWidth; c.height = window.innerHeight;
+      let particles = Array.from({ length: 80 }, () => ({
+        x: c.width / 2, y: c.height / 2,
+        vx: (Math.random() - 0.5) * 15, vy: (Math.random() - 0.5) * 15 - 5,
+        size: Math.random() * 8 + 4, color: `hsl(${Math.random() * 360}, 100%, 50%)`
+      }));
+
+      function render() {
+        cx.clearRect(0, 0, c.width, c.height);
+        particles.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.2;
+          cx.fillStyle = p.color;
+          cx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        particles = particles.filter(p => p.y < c.height);
+        if (particles.length > 0) requestAnimationFrame(render);
+      }
+      render();
+    }
+
+    drawWheel();
+  </script>
+</body>
+
+</html>

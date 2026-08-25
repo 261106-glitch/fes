@@ -111,6 +111,12 @@
   <div class="page-container">
     <!-- Hero -->
     <div class="hero animate-fade-in-up">
+      <!-- User Greeting (Shown when nickname is set) -->
+      <div class="user-greeting hidden" id="userGreeting">
+        <span>👋</span>
+        <span><strong class="user-name-text" id="greetingName"></strong>さん、お帰り！</span>
+      </div>
+
       <span class="hero-emoji">🎪</span>
       <h1 class="neon-title neon-title--gradient">スタンプラリー</h1>
       <p class="subtitle">3つのゲームをクリアしてスタンプを集めよう！</p>
@@ -123,6 +129,25 @@
         </div>
         <div class="progress-track">
           <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score & Evaluation Summary -->
+    <div class="mt-lg w-full animate-fade-in-up stagger-1">
+      <div class="section-label">初回スコアと評価</div>
+      <div class="score-summary-grid">
+        <!-- Bowling Score -->
+        <div class="score-card" id="scoreCardBowling">
+          <div class="score-card-title">🎳 ボーリング</div>
+          <div class="score-card-val" id="scoreValBowling">-</div>
+          <div class="rank-badge rank-badge--none" id="rankBadgeBowling">未プレイ</div>
+        </div>
+        <!-- Crane Score -->
+        <div class="score-card" id="scoreCardCrane">
+          <div class="score-card-title">🧲 クレーン</div>
+          <div class="score-card-val" id="scoreValCrane">-</div>
+          <div class="rank-badge rank-badge--none" id="rankBadgeCrane">未プレイ</div>
         </div>
       </div>
     </div>
@@ -146,7 +171,7 @@
         <!-- Crane -->
         <a href="crane/index.html" class="glass-card glass-card--interactive stamp-card" id="card-crane">
           <div class="stamp-icon-wrap">
-            <div class="stamp-icon stamp-icon--locked" id="icon-crane">🏗️</div>
+            <div class="stamp-icon stamp-icon--locked" id="icon-crane">🧲</div>
           </div>
           <div class="stamp-info">
             <div class="stamp-name">クレーンゲーム</div>
@@ -183,9 +208,75 @@
     </div>
   </div>
 
+  <!-- Nickname Registration Modal (Shown only on first visit) -->
+  <div class="modal-overlay hidden" id="nicknameModal">
+    <div class="modal-content">
+      <span class="modal-icon">🏷️</span>
+      <h2 class="modal-title">ニックネーム登録</h2>
+      <p class="modal-subtitle">
+        あなたのニックネームを入力してください。<br>
+        <span style="color: var(--neon-pink); font-size: 0.82rem; font-weight: 700;">※一度設定すると変更できません！</span>
+      </p>
+      <form id="nicknameForm" onsubmit="handleNicknameSubmit(event)">
+        <input type="text" id="nicknameInput" class="input-field mb-md" placeholder="ニックネームを入力" maxlength="12" required autofocus>
+        <button type="submit" class="btn btn--primary btn--full btn--large">決定してスタート！</button>
+      </form>
+    </div>
+  </div>
+
   <script src="js/stamp-manager.js"></script>
+  <script src="js/user-manager.js"></script>
   <script src="js/common.js"></script>
   <script>
+    /** ニックネーム初期化 */
+    function checkNickname() {
+      if (!UserManager.hasNickname()) {
+        document.getElementById('nicknameModal').classList.remove('hidden');
+      } else {
+        const name = UserManager.getNickname();
+        document.getElementById('greetingName').textContent = name;
+        document.getElementById('userGreeting').classList.remove('hidden');
+      }
+    }
+
+    /** ニックネーム登録処理 */
+    function handleNicknameSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('nicknameInput');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const success = UserManager.setNickname(val);
+      if (success) {
+        document.getElementById('nicknameModal').classList.add('hidden');
+        document.getElementById('greetingName').textContent = val;
+        document.getElementById('userGreeting').classList.remove('hidden');
+        vibrate([50, 50]);
+      }
+    }
+
+    /** スコアと評価のUI更新 */
+    function updateScoreUI() {
+      const bowling = UserManager.getScore('bowling');
+      const crane = UserManager.getScore('crane');
+
+      // ボーリング
+      if (bowling) {
+        document.getElementById('scoreValBowling').textContent = `${bowling.value} 本`;
+        const badge = document.getElementById('rankBadgeBowling');
+        badge.textContent = `評価: ${bowling.rank}`;
+        badge.className = `rank-badge rank-badge--${bowling.rank}`;
+      }
+
+      // クレーン
+      if (crane) {
+        document.getElementById('scoreValCrane').textContent = `${crane.value} 個`;
+        const badge = document.getElementById('rankBadgeCrane');
+        badge.textContent = `評価: ${crane.rank}`;
+        badge.className = `rank-badge rank-badge--${crane.rank}`;
+      }
+    }
+
     /** スタンプUIを更新 */
     function updateStampUI() {
       const stamps = StampManager.getStamps();
@@ -231,6 +322,57 @@
         }
       });
 
+      // ── ボーリングのURL制御 ──
+      const cardBowling = document.getElementById('card-bowling');
+      const statusBowling = document.getElementById('status-bowling');
+      if (UserManager.hasScore('bowling')) {
+        // スコア記録済み → URL解禁！
+        cardBowling.classList.remove('disabled-link');
+        cardBowling.onclick = null;
+        if (!stamps.bowling.completed) {
+          statusBowling.textContent = 'いつでもプレイ可能';
+        }
+      } else {
+        // スコア未記録 → ロック！
+        cardBowling.classList.add('disabled-link');
+        statusBowling.textContent = '🔒 QRコードからアクセス';
+        cardBowling.onclick = (e) => {
+          e.preventDefault();
+          alert('ボーリング会場のQRコードからプレイしてスコアを記録すると、ここからいつでも遊べるようになります！🎳');
+        };
+      }
+
+      // ── クレーンゲームのURL制御 ──
+      const cardCrane = document.getElementById('card-crane');
+      const statusCrane = document.getElementById('status-crane');
+      if (UserManager.hasScore('crane')) {
+        // スコア記録済み → URL解禁！
+        cardCrane.classList.remove('disabled-link');
+        cardCrane.onclick = null;
+        if (!stamps.crane.completed) {
+          statusCrane.textContent = 'いつでもプレイ可能';
+        }
+      } else {
+        // スコア未記録 → ロック！
+        cardCrane.classList.add('disabled-link');
+        statusCrane.textContent = '🔒 QRコードからアクセス';
+        cardCrane.onclick = (e) => {
+          e.preventDefault();
+          alert('クレーンゲーム会場のQRコードからプレイしてスコアを記録すると、ここからいつでも遊べるようになります！🧲');
+        };
+      }
+
+      // ── 謎解きのURL制御 ──
+      const cardMystery = document.getElementById('card-mystery');
+      const statusMystery = document.getElementById('status-mystery');
+      if (!stamps.mystery.completed) {
+        statusMystery.textContent = 'QRコードからアクセス';
+        cardMystery.onclick = (e) => {
+          e.preventDefault();
+          alert('教室にあるQRコードを探してスキャンしてね！📱');
+        };
+      }
+
       // プログレスバー更新
       document.getElementById('progressCount').textContent = `${completedCount} / 3`;
       document.getElementById('progressFill').style.width = `${(completedCount / 3) * 100}%`;
@@ -238,7 +380,6 @@
       // 全クリア
       if (completedCount === 3) {
         document.getElementById('completionBanner').classList.remove('hidden');
-        // 少し遅延して紙吹雪表示（初回のみ）
         if (!sessionStorage.getItem('confettiShown')) {
           setTimeout(() => {
             showConfetti(4000, 80);
@@ -251,15 +392,20 @@
 
     /** データリセット */
     function handleReset() {
-      if (confirm('スタンプデータをリセットしますか？')) {
+      if (confirm('ニックネームとスコア、スタンプデータを全てリセットしますか？')) {
         StampManager.reset();
+        UserManager.reset();
         sessionStorage.removeItem('confettiShown');
         location.reload();
       }
     }
 
     // 初期化
-    document.addEventListener('DOMContentLoaded', updateStampUI);
+    document.addEventListener('DOMContentLoaded', () => {
+      checkNickname();
+      updateScoreUI();
+      updateStampUI();
+    });
   </script>
 </body>
 </html>

@@ -17,7 +17,7 @@
 
   <!-- Game Header -->
   <div class="game-header-fixed">
-    <a href="../index.html" class="back-btn" id="backBtn">←</a>
+    <a href="javascript:void(0)" class="back-btn disabled-link" id="backBtn" title="スコア保存後に利用可能">←</a>
     <div class="game-title">🎳 ボウリング</div>
     <div class="hud-scores">
       <div class="hud-throw">
@@ -78,7 +78,34 @@
     </div>
   </div>
 
+  <!-- Riddle Overlay (Shown only on first play before game) -->
+  <div class="modal-overlay hidden" id="riddleOverlay">
+    <div class="modal-content riddle-modal">
+      <span class="modal-icon">❓</span>
+      <h2 class="modal-title">ボーリング なぞなぞ</h2>
+      <p class="modal-subtitle">正解するとゲームがスタートできるよ！</p>
+      
+      <div class="riddle-question-box" id="riddleQuestion">
+        学校法人吉田学園は大学1校<br>認可保育園3園があるが<br>
+        専門学校（大学校含む）は<br>何校あるでしょうか？
+      </div>
+
+      <div class="riddle-options-grid" id="riddleOptions">
+        <button class="riddle-option-btn" data-index="0">A. 6校</button>
+        <button class="riddle-option-btn" data-index="1">B. 9校</button>
+        <button class="riddle-option-btn" data-index="2">C. 108校</button>
+        <button class="riddle-option-btn" data-index="3">D. 5校</button>
+      </div>
+
+      <!-- Feedback Area -->
+      <div class="riddle-feedback hidden" id="riddleFeedback"></div>
+
+      <button class="btn btn--primary btn--full mt-md hidden" id="riddleProceedBtn">ゲームへ進む！🎳</button>
+    </div>
+  </div>
+
   <script src="../js/stamp-manager.js"></script>
+  <script src="../js/user-manager.js"></script>
   <script src="../js/common.js"></script>
   <script src="bowling.js"></script>
 </body>

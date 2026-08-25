@@ -46,6 +46,7 @@
   }
 
   function cacheDom() {
+    els.backBtn = document.getElementById('backBtn');
     els.machine = document.getElementById('craneMachine');
     els.rail = document.getElementById('craneRail');
     els.assembly = document.getElementById('craneAssembly');
@@ -65,6 +66,12 @@
     els.resultPrizes = document.getElementById('resultPrizes');
     els.resultBackBtn = document.getElementById('resultBackBtn');
     els.retryBtn = document.getElementById('retryBtn');
+
+    // Riddle Elements
+    els.riddleOverlay = document.getElementById('riddleOverlay');
+    els.riddleFeedback = document.getElementById('riddleFeedback');
+    els.riddleProceedBtn = document.getElementById('riddleProceedBtn');
+    els.riddleOptions = document.querySelectorAll('.riddle-option-btn');
   }
 
   function setupEventListeners() {
@@ -77,11 +84,89 @@
       handleGrab();
     }, { passive: false });
 
-    els.resultBackBtn.addEventListener('click', function () {
+    // ホームへの戻るボタン制限：スコアが保存されるまでは戻れない
+    if (els.backBtn) {
+      els.backBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (!UserManager.hasScore('crane')) {
+          alert('スコアが保存されるまでホームには戻れません！🧲');
+          return;
+        }
+        navigateTo('../index.html');
+      });
+    }
+
+    els.resultBackBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (!UserManager.hasScore('crane')) {
+        alert('スコアが保存されるまでホームには戻れません！🧲');
+        return;
+      }
       navigateTo('../index.html');
     });
 
     els.retryBtn.addEventListener('click', resetGame);
+
+    // 戻るボタンの表示・無効化状態を更新
+    updateBackBtnState();
+
+    // なぞなぞの初期化
+    initRiddle();
+  }
+
+  function updateBackBtnState() {
+    if (!els.backBtn) return;
+    if (UserManager.hasScore('crane')) {
+      els.backBtn.classList.remove('disabled-link');
+      els.backBtn.removeAttribute('style');
+    } else {
+      els.backBtn.classList.add('disabled-link');
+      els.backBtn.style.opacity = '0.3';
+      els.backBtn.style.pointerEvents = 'none';
+    }
+  }
+
+  // --- Riddle Handling ---
+  function initRiddle() {
+    if (UserManager.isRiddleDone('crane')) {
+      return; // 既にクリア済みなら通常通り
+    }
+
+    // 初回プレイ：あそびかたを隠してなぞなぞを表示
+    els.instructionsOverlay.classList.add('hidden');
+    els.riddleOverlay.classList.remove('hidden');
+
+    const correctAnswerIndex = 0; // 1. 情報ビジネス専門学校
+
+    els.riddleOptions.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const selected = parseInt(btn.getAttribute('data-index'), 10);
+        if (selected === correctAnswerIndex) {
+          // 正解
+          vibrate([50, 50, 100]);
+          els.riddleFeedback.className = 'riddle-feedback riddle-feedback--success';
+          els.riddleFeedback.innerHTML = '🎉 <strong>正解！</strong><br>専門学校北海道サイバークリエイターズ大学校(旧:情報ビジネス専門学校)';
+          els.riddleFeedback.classList.remove('hidden');
+
+          // 選択肢無効化
+          els.riddleOptions.forEach(b => b.disabled = true);
+
+          // 「ゲームへ進む」ボタン
+          els.riddleProceedBtn.classList.remove('hidden');
+          els.riddleProceedBtn.onclick = () => {
+            UserManager.setRiddleDone('crane');
+            els.riddleOverlay.classList.add('hidden');
+            els.instructionsOverlay.classList.remove('hidden');
+          };
+        } else {
+          // 不正解
+          vibrate(100);
+          els.riddleFeedback.className = 'riddle-feedback riddle-feedback--error';
+          els.riddleFeedback.innerHTML = '❌ <strong>ざんねん！不正解…</strong><br>もう一度考えて選んでね！';
+          els.riddleFeedback.classList.remove('hidden');
+        }
+      });
+    });
   }
 
   // --- Prize Generation ---
@@ -220,9 +305,13 @@
 
       state.clawY += CONFIG.descendSpeed;
 
+      // 近くの景品をハイライト
+      highlightNearbyPrizes();
+
       if (state.clawY >= state.maxDescend) {
         state.clawY = state.maxDescend;
         updateClawPosition();
+        clearNearbyHighlights();
         state.phase = 'grabbing';
         performGrab();
         return;
@@ -233,6 +322,31 @@
     }
 
     state.animFrameId = requestAnimationFrame(animate);
+  }
+
+  // --- 近接景品のハイライト ---
+  function highlightNearbyPrizes() {
+    const playAreaRect = els.playArea.getBoundingClientRect();
+    const railRect     = els.rail.getBoundingClientRect();
+    const clawCenterX = (state.craneX + 25) - (railRect.left - playAreaRect.left);
+    const railBottomInPlayArea = railRect.bottom - playAreaRect.top;
+    const clawCenterY = railBottomInPlayArea + state.clawY + 18;
+
+    state.prizes.forEach(prize => {
+      if (prize.grabbed) return;
+      const prizeCenterX = prize.x + prize.width  / 2;
+      const prizeCenterY = prize.y + prize.height / 2;
+      const dist = Math.hypot(clawCenterX - prizeCenterX, clawCenterY - prizeCenterY);
+      if (dist < CONFIG.grabZoneRadius * 1.3) {
+        prize.el.classList.add('prize-nearby');
+      } else {
+        prize.el.classList.remove('prize-nearby');
+      }
+    });
+  }
+
+  function clearNearbyHighlights() {
+    state.prizes.forEach(prize => prize.el.classList.remove('prize-nearby'));
   }
 
   // --- Update Claw Visual Position ---
@@ -280,22 +394,46 @@
       state.grabbedPrize = closestPrize;
       closestPrize.grabbed = true;
 
-      // 景品を craneClaw の子要素に移動 → クローの動きに自動追従
-      closestPrize.el.classList.add('prize-grabbed');
-      closestPrize.el.style.position = 'absolute';
-      closestPrize.el.style.left     = '-12px';   // claw内での相対位置（横中心）
-      closestPrize.el.style.top      = '30px';    // clawの先端直下
-      closestPrize.el.style.transform = 'rotate(0deg)';
-      closestPrize.el.style.zIndex   = '20';
-      closestPrize.el.style.fontSize = '1.8rem';
-      els.claw.appendChild(closestPrize.el); // 親要素変更 ← これが追従のポイント
+      // ── 景品の現在位置をclaw座標系に変換 ──────────────────────────
+      // appendChildすると親が変わりposition解釈も変わるため、
+      // 先に「clawから見た現在位置」を計算しておく
+      const prizeRect = closestPrize.el.getBoundingClientRect();
+      const clawRect  = els.claw.getBoundingClientRect();
+      const startLeft = prizeRect.left - clawRect.left;
+      const startTop  = prizeRect.top  - clawRect.top;
+
+      // ── 今の視覚位置のままclaw子要素に移動 ──────────────────────
+      closestPrize.el.classList.remove('prize-nearby');
+      closestPrize.el.style.position  = 'absolute';
+      closestPrize.el.style.left      = startLeft + 'px';
+      closestPrize.el.style.top       = startTop  + 'px';
+      closestPrize.el.style.transform = '';
+      closestPrize.el.style.zIndex    = '20';
+      closestPrize.el.style.fontSize  = '1.8rem';
+      closestPrize.el.style.transition = ''; // まだトランジション無し
+      els.claw.appendChild(closestPrize.el); // 親変更（視覚位置は変わらない）
+
+      // ── 次フレームでトランジションON → claw先端へ滑らかに吸い付く ──
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          closestPrize.el.style.transition = 'left 0.35s ease, top 0.35s ease';
+          closestPrize.el.style.left = '-12px';  // claw先端の横中心
+          closestPrize.el.style.top  = '30px';   // claw先端直下
+        });
+      });
+
+      // ── トランジション完了後に揺れアニメ開始 ──────────────────────
+      setTimeout(() => {
+        closestPrize.el.style.transition = '';
+        closestPrize.el.classList.add('prize-grabbed');
+      }, 400);
     }
 
-    // 少し待って上昇
+    // 少し待って上昇（景品のトランジションが完了してから）
     setTimeout(() => {
       state.phase = 'ascending';
       ascendCrane(grabbed);
-    }, 500);
+    }, 600);
   }
 
   // --- Crane Ascent ---
@@ -359,20 +497,28 @@
     vibrate([50, 30, 50, 30, 100]);
 
     // 景品を playArea に戻して落下アニメを再生
+    prize.el.classList.remove('prize-grabbed');
     prize.el.style.position  = 'absolute';
     prize.el.style.left      = prize.x + 'px';
     prize.el.style.top       = prize.y + 'px';
     prize.el.style.zIndex    = '20';
     prize.el.style.transform = 'rotate(0deg)';
+    prize.el.style.animation = ''; // 既存アニメをリセット
     els.playArea.appendChild(prize.el);  // playArea に戻す
-    prize.el.classList.add('prize-dropping');
+
+    // 一瞬輝かせてから落下
+    prize.el.style.filter = 'drop-shadow(0 0 16px rgba(255,215,0,0.9)) brightness(1.4)';
+    setTimeout(() => {
+      prize.el.style.filter = '';
+      prize.el.classList.add('prize-dropping');
+    }, 80);
 
     setTimeout(() => {
       prize.el.remove();
       updateCollectedDisplay();
       state.grabbedPrize = null;
       finishAttempt();
-    }, 600);
+    }, 700);
   }
 
   // --- Finish Single Attempt ---
@@ -400,6 +546,10 @@
 
   // --- Show Results ---
   function showResults() {
+    // 初回スコア保存（初回のみ保存される）
+    UserManager.saveScore('crane', state.collectedPrizes.length);
+    updateBackBtnState();
+
     state.phase = 'done';
     els.grabBtn.disabled = true;
     els.machine.classList.add('game-over');

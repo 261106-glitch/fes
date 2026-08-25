@@ -332,33 +332,59 @@
   cursor: default;
   user-select: none;
   transition: transform 0.3s ease, opacity 0.5s ease;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
   z-index: 2;
+  will-change: transform;
 }
 
+/* 景品がクローに掴まれた状態 - 揺れる */
 .prize-item.prize-grabbed {
   z-index: 20;
-  transition: all 0.5s ease;
+  animation: prizeSwing 0.6s ease-in-out infinite alternate;
+  filter: drop-shadow(0 6px 12px rgba(123, 104, 238, 0.5));
 }
 
+@keyframes prizeSwing {
+  0%   { transform: rotate(-8deg) translateY(0px); }
+  100% { transform: rotate(8deg)  translateY(3px); }
+}
+
+/* 景品が落下してシュートに入るアニメ（リアルな重力落下） */
 .prize-item.prize-dropping {
-  animation: prizeDrop 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: prizeDropReal 0.9s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
-@keyframes prizeDrop {
-  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  60% { transform: translateY(60px) rotate(15deg); opacity: 1; }
-  100% { transform: translateY(120px) rotate(25deg); opacity: 0; }
+@keyframes prizeDropReal {
+  0%   { transform: translateY(0)   rotate(0deg)  scale(1);    opacity: 1; }
+  30%  { transform: translateY(20px) rotate(10deg) scale(1.05); opacity: 1; }
+  55%  { transform: translateY(55px) rotate(22deg) scale(0.95); opacity: 1; }
+  75%  { transform: translateY(85px) rotate(30deg) scale(0.88); opacity: 0.8; }
+  100% { transform: translateY(130px) rotate(40deg) scale(0.5);  opacity: 0; }
 }
 
+/* ミス時: 景品が小さく跳ねてまた落ちる */
 .prize-item.prize-miss {
-  animation: prizeMissed 0.5s ease;
+  animation: prizeMissed 0.7s ease;
 }
 
 @keyframes prizeMissed {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0); }
+  0%   { transform: translateY(0)   rotate(0deg); }
+  20%  { transform: translateY(-12px) rotate(-5deg); }
+  40%  { transform: translateY(0)   rotate(3deg); }
+  60%  { transform: translateY(-5px)  rotate(-2deg); }
+  80%  { transform: translateY(0)   rotate(1deg); }
+  100% { transform: translateY(0)   rotate(0deg); }
+}
+
+/* クロー下降中の待機アニメ - 景品が小さくスウェイ */
+.prize-item.prize-nearby {
+  animation: prizeNearby 0.4s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 8px rgba(255, 220, 100, 0.6));
+}
+
+@keyframes prizeNearby {
+  0%   { transform: scale(1.05) rotate(-3deg); }
+  100% { transform: scale(0.97) rotate(3deg);  }
 }
 
 /* --- Prize Chute --- */
@@ -549,13 +575,26 @@
 .crane-shadow {
   position: absolute;
   bottom: 4px;
-  width: 30px;
-  height: 6px;
-  background: radial-gradient(ellipse, rgba(123, 104, 238, 0.3), transparent);
+  width: 40px;
+  height: 8px;
+  background: radial-gradient(ellipse, rgba(123, 104, 238, 0.45), transparent 70%);
   border-radius: 50%;
   z-index: 1;
   pointer-events: none;
   transition: left 0.05s linear;
+  animation: shadowPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes shadowPulse {
+  0%, 100% { opacity: 0.6; transform: scaleX(1);   }
+  50%       { opacity: 1;   transform: scaleX(1.15); }
+}
+
+/* 景品獲得時: シュートへの吸い込みエフェクト */
+@keyframes prizeSuccessGlow {
+  0%   { filter: drop-shadow(0 0 0px rgba(255,215,0,0)); }
+  40%  { filter: drop-shadow(0 0 16px rgba(255,215,0,0.9)) brightness(1.3); }
+  100% { filter: drop-shadow(0 0 0px rgba(255,215,0,0)); }
 }
 
 /* --- Mobile optimizations --- */
