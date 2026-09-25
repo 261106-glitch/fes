@@ -99,7 +99,7 @@
           // 正解
           vibrate([50, 50, 100]);
           els.riddleFeedback.className = 'riddle-feedback riddle-feedback--success';
-          els.riddleFeedback.innerHTML = '🎉 <strong>正解！</strong><br>キーボードには文字入力用のキーがたくさんありますが、鍵穴はありません！';
+          els.riddleFeedback.innerHTML = '🎉 <strong>正解！</strong><br>なんも考えてないけど！';
           els.riddleFeedback.classList.remove('hidden');
 
           // 選択肢無効化
