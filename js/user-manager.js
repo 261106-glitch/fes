@@ -1,4 +1,4 @@
-﻿/* ============================================
+/* ============================================
    👤 User Manager - ユーザーデータ管理
    ============================================ */
 
@@ -12,11 +12,13 @@ const UserManager = (function () {
       nickname: null,
       scores: {
         bowling: null, // { value: number, rank: string, savedAt: string }
-        crane: null    // { value: number, rank: string, savedAt: string }
+        crane: null,   // { value: number, rank: string, savedAt: string }
+        typing: null   // { value: string, rank: string, savedAt: string }
       },
       riddleDone: {
         bowling: false,
-        crane: false
+        crane: false,
+        typing: false
       }
     };
   }
@@ -31,11 +33,13 @@ const UserManager = (function () {
         nickname: (p.nickname !== undefined && p.nickname !== null) ? p.nickname : d.nickname,
         scores: {
           bowling: (p.scores && p.scores.bowling !== undefined) ? p.scores.bowling : d.scores.bowling,
-          crane: (p.scores && p.scores.crane !== undefined) ? p.scores.crane : d.scores.crane
+          crane: (p.scores && p.scores.crane !== undefined) ? p.scores.crane : d.scores.crane,
+          typing: (p.scores && p.scores.typing !== undefined) ? p.scores.typing : d.scores.typing
         },
         riddleDone: {
           bowling: (p.riddleDone && p.riddleDone.bowling !== undefined) ? p.riddleDone.bowling : d.riddleDone.bowling,
-          crane: (p.riddleDone && p.riddleDone.crane !== undefined) ? p.riddleDone.crane : d.riddleDone.crane
+          crane: (p.riddleDone && p.riddleDone.crane !== undefined) ? p.riddleDone.crane : d.riddleDone.crane,
+          typing: (p.riddleDone && p.riddleDone.typing !== undefined) ? p.riddleDone.typing : d.riddleDone.typing
         }
       };
     } catch (e) {
@@ -91,26 +95,32 @@ const UserManager = (function () {
 
     // ── スコア ────────────────────────────────────
     hasScore(gameId) {
-      return getData().scores[gameId] !== null;
+      return getData().scores[gameId] !== null && getData().scores[gameId] !== undefined;
     },
     getScore(gameId) {
       return getData().scores[gameId];
     },
     /** 初回のみ保存（既にスコアがあれば何もしない） */
-    saveScore(gameId, value) {
+    saveScore(gameId, value, customRank) {
       const data = getData();
-      if (data.scores[gameId] !== null) {
+      if (data.scores[gameId] !== null && data.scores[gameId] !== undefined) {
         return false; // 最初の1回分だけ保存
       }
       let rank = 'C';
+      let val = value;
       if (gameId === 'bowling') {
         rank = calcBowlingRank(value);
+        val = Number(value);
       } else if (gameId === 'crane') {
         rank = calcCraneRank(value);
+        val = Number(value);
+      } else if (gameId === 'typing') {
+        rank = customRank || String(value).toUpperCase();
+        val = rank;
       }
 
       data.scores[gameId] = {
-        value: Number(value),
+        value: val,
         rank: rank,
         savedAt: new Date().toISOString()
       };
@@ -118,7 +128,7 @@ const UserManager = (function () {
     },
     hasAllScores() {
       const d = getData();
-      return d.scores.bowling !== null && d.scores.crane !== null;
+      return d.scores.bowling !== null && d.scores.crane !== null && d.scores.typing !== null;
     },
 
     // ── 評価計算関数 ──────────────────────────────
@@ -141,3 +151,4 @@ const UserManager = (function () {
     }
   };
 })();
+

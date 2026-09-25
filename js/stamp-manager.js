@@ -10,6 +10,7 @@ const StampManager = {
     return {
       bowling: { completed: false, timestamp: null },
       crane: { completed: false, timestamp: null },
+      typing: { completed: false, timestamp: null },
       mystery: { completed: false, timestamp: null }
     };
   },
@@ -25,6 +26,7 @@ const StampManager = {
       return {
         bowling: parsed.bowling || defaults.bowling,
         crane: parsed.crane || defaults.crane,
+        typing: parsed.typing || defaults.typing,
         mystery: parsed.mystery || defaults.mystery
       };
     } catch (e) {
@@ -35,12 +37,12 @@ const StampManager = {
 
   /** スタンプを付与 */
   addStamp(gameId) {
-    if (!['bowling', 'crane', 'mystery'].includes(gameId)) {
+    if (!['bowling', 'crane', 'typing', 'mystery'].includes(gameId)) {
       console.error('StampManager: Invalid gameId:', gameId);
       return false;
     }
     const stamps = this.getStamps();
-    if (stamps[gameId].completed) {
+    if (stamps[gameId] && stamps[gameId].completed) {
       return false; // 既にクリア済み
     }
     stamps[gameId] = {
@@ -64,16 +66,17 @@ const StampManager = {
   /** 全クリア確認 */
   isAllCompleted() {
     const stamps = this.getStamps();
-    return stamps.bowling.completed && stamps.crane.completed && stamps.mystery.completed;
+    return stamps.bowling.completed && stamps.crane.completed && stamps.typing.completed && stamps.mystery.completed;
   },
 
   /** クリア済みスタンプ数 */
   getCompletedCount() {
     const stamps = this.getStamps();
     let count = 0;
-    if (stamps.bowling.completed) count++;
-    if (stamps.crane.completed) count++;
-    if (stamps.mystery.completed) count++;
+    if (stamps.bowling?.completed) count++;
+    if (stamps.crane?.completed) count++;
+    if (stamps.typing?.completed) count++;
+    if (stamps.mystery?.completed) count++;
     return count;
   },
 
@@ -82,3 +85,4 @@ const StampManager = {
     localStorage.removeItem(this.STORAGE_KEY);
   }
 };
+
