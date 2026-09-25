@@ -150,19 +150,19 @@ const UserManager = (function () {
 
       const totalPts = bPts + cPts + tPts; // 最大: 3 + 3 + 4 = 10点
 
-      if (totalPts >= 10) {
+      if (totalPts >= 9) {
         return {
           rank: 'S',
           title: '最高ランク S 達成！👑',
           comment: '全てにおいて圧倒的なパーフェクト実力！素晴らしい！'
         };
-      } else if (totalPts >= 8) {
+      } else if (totalPts >= 7) {
         return {
           rank: 'A',
           title: '総合評価 A 達成！🌟',
           comment: 'ハイレベルな技術で見事な好成績を残しました！'
         };
-      } else if (totalPts >= 6) {
+      } else if (totalPts >= 5) {
         return {
           rank: 'B',
           title: '総合評価 B 達成！✨',
