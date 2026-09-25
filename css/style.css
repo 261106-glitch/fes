@@ -371,6 +371,11 @@ body {
   box-shadow: var(--shadow-neon-blue);
 }
 
+.stamp-icon--typing {
+  background: linear-gradient(135deg, var(--neon-yellow), var(--neon-pink));
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
 .stamp-icon--mystery {
   background: linear-gradient(135deg, var(--neon-green), #00c9a7);
   box-shadow: var(--shadow-neon-green);
@@ -731,8 +736,8 @@ body {
 /* --- Score & Evaluation Section --- */
 .score-summary-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
   width: 100%;
   margin-top: var(--space-sm);
 }
@@ -741,7 +746,7 @@ body {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-xs);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -750,13 +755,14 @@ body {
 }
 
 .score-card-title {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .score-card-val {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 900;
   color: var(--text-primary);
   line-height: 1.2;
@@ -764,12 +770,24 @@ body {
 
 .rank-badge {
   display: inline-block;
-  padding: 2px 10px;
+  padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 900;
   letter-spacing: 0.05em;
   margin-top: 2px;
+}
+
+.rank-badge--S {
+  background: linear-gradient(135deg, #ff007f, #7928ca, #00d4ff);
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 0, 127, 0.6);
+  animation: badgeGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes badgeGlow {
+  0% { filter: drop-shadow(0 0 4px rgba(255, 0, 127, 0.6)); }
+  100% { filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.8)); }
 }
 
 .rank-badge--A {
@@ -877,6 +895,100 @@ body {
   background: rgba(255, 107, 157, 0.15);
   border: 1px solid rgba(255, 107, 157, 0.4);
   color: var(--neon-pink);
+}
+
+/* --- Overall Evaluation Display --- */
+.overall-rank-box {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  border: 2px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-lg);
+  margin-top: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  animation: fadeInScale 0.6s ease;
+}
+
+.overall-rank-box::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.overall-rank-badge-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.overall-rank-letter {
+  font-size: 4.5rem;
+  font-weight: 900;
+  line-height: 1;
+  margin: 4px 0;
+  letter-spacing: -0.02em;
+}
+
+.overall-rank-letter--S {
+  background: linear-gradient(135deg, #ff007f, #ffd700, #00d4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 16px rgba(255, 0, 128, 0.8));
+  animation: sRankGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes sRankGlow {
+  0% { filter: drop-shadow(0 0 12px rgba(255, 0, 128, 0.7)); transform: scale(1); }
+  100% { filter: drop-shadow(0 0 24px rgba(0, 212, 255, 0.9)); transform: scale(1.05); }
+}
+
+.overall-rank-letter--A {
+  background: linear-gradient(135deg, #ffd700, #ff8c42);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.6));
+}
+
+.overall-rank-letter--B {
+  background: linear-gradient(135deg, #00d4ff, #7b68ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+}
+
+.overall-rank-letter--C {
+  color: #e0e0f0;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+.overall-rank-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.overall-rank-comment {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 320px;
+  margin-top: 4px;
 }
 
 /* --- Responsive --- */

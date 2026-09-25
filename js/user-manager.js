@@ -135,6 +135,48 @@ const UserManager = (function () {
     calcBowlingRank,
     calcCraneRank,
 
+    // ── 総合評価（S / A / B / C）の算出 ───────────
+    getOverallRank() {
+      const data = getData();
+      const bRank = data.scores.bowling?.rank || 'C';
+      const cRank = data.scores.crane?.rank || 'C';
+      const tRank = data.scores.typing?.rank || 'C';
+
+      // ランクを点数化
+      const scoreMap = { 'S': 4, 'A': 3, 'B': 2, 'C': 1 };
+      const bPts = scoreMap[bRank] || 1;
+      const cPts = scoreMap[cRank] || 1;
+      const tPts = scoreMap[tRank] || 1;
+
+      const totalPts = bPts + cPts + tPts; // 最大: 3 + 3 + 4 = 10点
+
+      if (totalPts >= 10) {
+        return {
+          rank: 'S',
+          title: '最高ランク S 達成！👑',
+          comment: '全てにおいて圧倒的なパーフェクト実力！素晴らしい！'
+        };
+      } else if (totalPts >= 8) {
+        return {
+          rank: 'A',
+          title: '総合評価 A 達成！🌟',
+          comment: 'ハイレベルな技術で見事な好成績を残しました！'
+        };
+      } else if (totalPts >= 6) {
+        return {
+          rank: 'B',
+          title: '総合評価 B 達成！✨',
+          comment: 'バランスの取れたナイスプレイでした！'
+        };
+      } else {
+        return {
+          rank: 'C',
+          title: '総合評価 C 達成！👍',
+          comment: '全ゲーム制覇おめでとう！ナイスチャレンジ！'
+        };
+      }
+    },
+
     // ── なぞなぞ ──────────────────────────────────
     isRiddleDone(gameId) {
       return !!getData().riddleDone[gameId];

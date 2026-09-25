@@ -225,8 +225,16 @@
     <!-- Completion Banner (hidden by default) -->
     <div class="glass-card completion-banner mt-xl hidden" id="completionBanner">
       <span class="trophy">🏆</span>
-      <h2>コンプリート！</h2>
+      <h2>全ゲームクリア！</h2>
       <p>すべてのスタンプを集めました！<br>おめでとうございます！🎉</p>
+
+      <!-- 総合評価エリア -->
+      <div class="overall-rank-box" id="overallRankBox">
+        <span class="overall-rank-badge-label">✨ あなたの総合評価 ✨</span>
+        <div class="overall-rank-letter" id="overallRankLetter">S</div>
+        <div class="overall-rank-title" id="overallRankTitle">最高ランク S 達成！👑</div>
+        <p class="overall-rank-comment" id="overallRankComment">全てにおいて圧倒的なパーフェクト実力！素晴らしい！</p>
+      </div>
     </div>
 
     <!-- Footer -->
@@ -438,6 +446,19 @@
 
       // 全クリア
       if (completedCount === 4) {
+        // 総合評価（S / A / B / C）の算出と表示
+        const overall = UserManager.getOverallRank();
+        const letterEl = document.getElementById('overallRankLetter');
+        const titleEl = document.getElementById('overallRankTitle');
+        const commentEl = document.getElementById('overallRankComment');
+
+        if (letterEl && titleEl && commentEl) {
+          letterEl.textContent = overall.rank;
+          letterEl.className = `overall-rank-letter overall-rank-letter--${overall.rank}`;
+          titleEl.textContent = overall.title;
+          commentEl.textContent = overall.comment;
+        }
+
         document.getElementById('completionBanner').classList.remove('hidden');
         if (!sessionStorage.getItem('confettiShown')) {
           setTimeout(() => {
