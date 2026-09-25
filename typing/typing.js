@@ -7,7 +7,6 @@
 
   // --- DOM References ---
   const els = {};
-  let selectedRank = null;
 
   function init() {
     cacheDom();
@@ -20,13 +19,6 @@
   function cacheDom() {
     els.backBtn = document.getElementById('backBtn');
     els.evalButtons = document.querySelectorAll('.eval-btn');
-    
-    // Confirm Modal
-    els.confirmModal = document.getElementById('confirmModal');
-    els.confirmRankDisplay = document.getElementById('confirmRankDisplay');
-    els.confirmRankText = document.getElementById('confirmRankText');
-    els.confirmOkBtn = document.getElementById('confirmOkBtn');
-    els.confirmCancelBtn = document.getElementById('confirmCancelBtn');
 
     // Result Modal
     els.resultModal = document.getElementById('resultModal');
@@ -55,22 +47,20 @@
       });
     }
 
-    // 評価ボタンのタップ
+    // 評価ボタンのタップ（タップしたら記録してホームに戻す）
     els.evalButtons.forEach(btn => {
       btn.addEventListener('click', function () {
         const rank = this.getAttribute('data-rank');
-        openConfirmModal(rank);
+        handleRankSelection(rank);
       });
     });
 
-    // 確認モーダルのボタン
-    els.confirmCancelBtn.addEventListener('click', closeConfirmModal);
-    els.confirmOkBtn.addEventListener('click', confirmAndSaveRank);
-
     // 結果モーダルの「スタンプラリーに戻る」
-    els.resultRallyBtn.addEventListener('click', function () {
-      navigateTo('../index.html');
-    });
+    if (els.resultRallyBtn) {
+      els.resultRallyBtn.addEventListener('click', function () {
+        navigateTo('../index.html');
+      });
+    }
   }
 
   function updateBackBtnState() {
@@ -88,10 +78,17 @@
   // --- Riddle Handling ---
   function initRiddle() {
     if (UserManager.isRiddleDone('typing')) {
-      return; // 既にクリア済みなら表示しない
+      // 既にクリア済みなら非表示
+      if (els.riddleOverlay) {
+        els.riddleOverlay.classList.add('hidden');
+      }
+      return;
     }
 
-    els.riddleOverlay.classList.remove('hidden');
+    // 初回プレイ：なぞなぞを表示
+    if (els.riddleOverlay) {
+      els.riddleOverlay.classList.remove('hidden');
+    }
 
     const correctAnswerIndex = 1; // 2. キーボード
 
@@ -125,82 +122,72 @@
     });
   }
 
-  // --- Confirm Modal ---
-  function openConfirmModal(rank) {
-    selectedRank = rank;
-    vibrate(30);
-
-    els.confirmRankDisplay.textContent = rank;
-    els.confirmRankDisplay.className = confirm-rank-display confirm-rank-display--;
-    els.confirmRankText.textContent = 評価【  】;
-
-    els.confirmModal.classList.remove('hidden');
-  }
-
-  function closeConfirmModal() {
-    selectedRank = null;
-    els.confirmModal.classList.add('hidden');
-  }
-
-  // --- Confirm & Save ---
-  function confirmAndSaveRank() {
-    if (!selectedRank) return;
-
-    const rank = selectedRank;
-    closeConfirmModal();
+  // --- 評価ボタンタップ時の処理（記録してホームに戻す） ---
+  function handleRankSelection(rank) {
+    if (!rank) return;
 
     // 初回スコア保存
     UserManager.saveScore('typing', rank);
-    
+
     // スタンプ付与
     StampManager.addStamp('typing');
 
     // 戻るボタンの制限解除
     updateBackBtnState();
 
-    // 結果モーダル表示
-    showResultModal(rank);
-  }
-
-  function showResultModal(rank) {
     // 演出
-    showConfetti(4000, 80);
+    showConfetti(3000, 80);
     if (rank === 'S' || rank === 'A') {
       vibrate([100, 50, 100, 50, 200]);
     } else {
       vibrate([100, 100]);
     }
 
-    els.resultRank.textContent = rank;
-    els.resultRank.className = ank-badge rank-badge--;
-    els.resultRank.style.fontSize = '1.3rem';
-    els.resultRank.style.padding = '4px 16px';
+    // 結果モーダルを表示して「スタンプラリーに戻る」を促す、または1.5秒後に自動でホームに戻す
+    showResultAndReturn(rank);
+  }
 
-    if (rank === 'S') {
-      els.resultIcon.textContent = '👑';
-      els.resultTitle.textContent = '最高ランク 達成！';
-    } else if (rank === 'A') {
-      els.resultIcon.textContent = '🌟';
-      els.resultTitle.textContent = '素晴らしい！';
-    } else if (rank === 'B') {
-      els.resultIcon.textContent = '✨';
-      els.resultTitle.textContent = 'ナイスファイト！';
-    } else {
-      els.resultIcon.textContent = '🎉';
-      els.resultTitle.textContent = '評価完了！';
+  function showResultAndReturn(rank) {
+    if (els.resultRank) {
+      els.resultRank.textContent = rank;
+      els.resultRank.className = 'rank-badge rank-badge--' + rank;
+      els.resultRank.style.fontSize = '1.3rem';
+      els.resultRank.style.padding = '4px 16px';
     }
 
-    els.resultModal.classList.remove('hidden');
+    if (els.resultIcon && els.resultTitle) {
+      if (rank === 'S') {
+        els.resultIcon.textContent = '👑';
+        els.resultTitle.textContent = '最高ランク S 達成！';
+      } else if (rank === 'A') {
+        els.resultIcon.textContent = '🌟';
+        els.resultTitle.textContent = '評価 A 達成！';
+      } else if (rank === 'B') {
+        els.resultIcon.textContent = '✨';
+        els.resultTitle.textContent = '評価 B 達成！';
+      } else {
+        els.resultIcon.textContent = '👍';
+        els.resultTitle.textContent = '評価 C 達成！';
+      }
+    }
+
+    if (els.resultModal) {
+      els.resultModal.classList.remove('hidden');
+    }
+
+    // 2秒後に自動でホームに戻る（ボタンを押しても即戻れる）
+    setTimeout(() => {
+      navigateTo('../index.html');
+    }, 2000);
   }
 
   // 既に記録済みの場合は表示を調整（再訪問時）
   function checkAlreadyRecorded() {
     if (UserManager.hasScore('typing')) {
       const saved = UserManager.getScore('typing');
-      // 画面上部に記録済みバッジを表示する等のガイド
       const guideDesc = document.querySelector('.typing-guide-desc');
       if (guideDesc && saved) {
-        guideDesc.innerHTML = <span style="color: var(--neon-green); font-weight: 700;">✅ 記録済み（評価: ）</span> - スタンプ獲得済みです！;
+        guideDesc.innerHTML = '<span style="color: var(--neon-green); font-weight: 700;">✅ 記録済み（評価: ' + saved.rank + '）</span><br>もう一度ボタンを押すとホームに戻ります。';
       }
     }
   }
