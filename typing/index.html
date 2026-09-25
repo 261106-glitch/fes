@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>⌨️ タイピング評価 - スタンプラリー</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="typing.css">
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animated">
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+  </div>
+
+  <div class="page-container">
+    <!-- Header -->
+    <div class="game-header">
+      <a href="javascript:void(0)" class="back-btn disabled-link" id="backBtn" title="評価記録後に利用可能">←</a>
+      <div class="game-title">⌨️ タイピング評価</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="typing-container">
+      <div class="glass-card typing-guide-card">
+        <h2 class="typing-guide-title">タイピング結果の評価</h2>
+        <p class="typing-guide-desc">あなたのタイピング結果に応じた評価ボタンをタップしてください。</p>
+      </div>
+
+      <!-- 4つの大きな評価ボタン -->
+      <div class="eval-btn-grid">
+        <!-- S Button -->
+        <button class="eval-btn eval-btn--S" data-rank="S" type="button">
+          <span class="eval-rank-letter">S</span>
+          <span class="eval-rank-label">最高評価 👑</span>
+        </button>
+
+        <!-- A Button -->
+        <button class="eval-btn eval-btn--A" data-rank="A" type="button">
+          <span class="eval-rank-letter">A</span>
+          <span class="eval-rank-label">優秀 🌟</span>
+        </button>
+
+        <!-- B Button -->
+        <button class="eval-btn eval-btn--B" data-rank="B" type="button">
+          <span class="eval-rank-letter">B</span>
+          <span class="eval-rank-label">良好 ✨</span>
+        </button>
+
+        <!-- C Button -->
+        <button class="eval-btn eval-btn--C" data-rank="C" type="button">
+          <span class="eval-rank-letter">C</span>
+          <span class="eval-rank-label">クリア 👍</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="modal-overlay hidden" id="confirmModal">
+    <div class="modal-content">
+      <span class="modal-icon">📝</span>
+      <h2 class="modal-title">評価の確認</h2>
+      <p class="modal-subtitle"><span id="confirmRankText" style="font-weight: 700; color: var(--neon-cyan);"></span> で記録します。<br><span style="color: var(--neon-pink); font-size: 0.82rem; font-weight: 700;">※最初の1回分のみ保存されます！</span></p>
+      <div id="confirmRankDisplay" class="confirm-rank-display"></div>
+      <div class="modal-actions mt-lg">
+        <button class="btn btn--primary btn--full btn--large" id="confirmOkBtn">決定する</button>
+        <button class="btn btn--outline btn--full" id="confirmCancelBtn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Modal -->
+  <div class="modal-overlay hidden" id="resultModal">
+    <div class="modal-content">
+      <span class="modal-icon" id="resultIcon">🎉</span>
+      <h2 class="modal-title" id="resultTitle">評価完了！</h2>
+      <p class="modal-subtitle">タイピングの評価を記録しました！<br>スタンプを獲得しました！🎊</p>
+      <div class="mb-lg">
+        <span class="rank-badge" id="resultRank">S</span>
+      </div>
+      <div class="modal-actions mt-lg">
+        <button class="btn btn--primary btn--full btn--large" id="resultRallyBtn">スタンプラリーに戻る</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Riddle Overlay (Shown only on first play before eval) -->
+  <div class="modal-overlay hidden" id="riddleOverlay">
+    <div class="modal-content riddle-modal">
+      <span class="modal-icon">❓</span>
+      <h2 class="modal-title">タイピング なぞなぞ</h2>
+      <p class="modal-subtitle">正解すると評価が記録できるよ！</p>
+      
+      <div class="riddle-question-box" id="riddleQuestion">
+        「キーをたくさん持っているのに、鍵穴が一つもないものはな〜んだ？」
+      </div>
+
+      <div class="riddle-options-grid" id="riddleOptions">
+        <button class="riddle-option-btn" data-index="0">1. ピアノ</button>
+        <button class="riddle-option-btn" data-index="1">2. キーボード</button>
+        <button class="riddle-option-btn" data-index="2">3. 金庫</button>
+        <button class="riddle-option-btn" data-index="3">4. トランペット</button>
+      </div>
+
+      <!-- Feedback Area -->
+      <div class="riddle-feedback hidden" id="riddleFeedback"></div>
+
+      <button class="btn btn--primary btn--full mt-md hidden" id="riddleProceedBtn">評価へ進む！⌨️</button>
+    </div>
+  </div>
+
+  <script src="../js/stamp-manager.js"></script>
+  <script src="../js/user-manager.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="typing.js"></script>
+</body>
+</html>

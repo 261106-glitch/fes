@@ -1,0 +1,193 @@
+﻿/* ============================================
+   ⌨️ Typing Evaluation - Styles
+   ============================================ */
+
+.typing-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-top: var(--space-md);
+  animation: fadeInUp 0.5s ease;
+}
+
+.typing-guide-card {
+  text-align: center;
+  padding: var(--space-lg);
+  width: 100%;
+}
+
+.typing-guide-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--neon-cyan);
+  margin-bottom: var(--space-xs);
+}
+
+.typing-guide-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* --- 4つの大きな評価ボタン --- */
+.eval-btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.eval-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 28px 16px;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.eval-btn:active {
+  transform: scale(0.94);
+}
+
+.eval-rank-letter {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.eval-rank-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+/* S Button (Ultimate Glow) */
+.eval-btn--S {
+  border-color: rgba(255, 0, 128, 0.5);
+  background: linear-gradient(135deg, rgba(255, 0, 128, 0.2), rgba(121, 40, 202, 0.25));
+  box-shadow: 0 0 20px rgba(255, 0, 128, 0.3), inset 0 0 15px rgba(255, 0, 128, 0.1);
+  animation: sBtnPulse 2s ease-in-out infinite alternate;
+}
+
+.eval-btn--S .eval-rank-letter {
+  background: linear-gradient(135deg, #ff007f, #ffd700, #00d4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 12px rgba(255, 0, 128, 0.8));
+}
+
+.eval-btn--S .eval-rank-label {
+  color: var(--neon-pink);
+}
+
+@keyframes sBtnPulse {
+  0% { box-shadow: 0 0 15px rgba(255, 0, 128, 0.3); border-color: rgba(255, 0, 128, 0.4); }
+  100% { box-shadow: 0 0 30px rgba(255, 0, 128, 0.6), 0 0 50px rgba(0, 212, 255, 0.2); border-color: rgba(255, 0, 128, 0.8); }
+}
+
+/* A Button (Gold) */
+.eval-btn--A {
+  border-color: rgba(255, 215, 0, 0.4);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 140, 66, 0.15));
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
+.eval-btn--A .eval-rank-letter {
+  background: linear-gradient(135deg, #ffd700, #ff8c42);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+}
+
+.eval-btn--A .eval-rank-label {
+  color: var(--neon-yellow);
+}
+
+/* B Button (Cyan/Purple) */
+.eval-btn--B {
+  border-color: rgba(0, 212, 255, 0.4);
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(123, 104, 238, 0.15));
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+}
+
+.eval-btn--B .eval-rank-letter {
+  background: linear-gradient(135deg, #00d4ff, #7b68ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
+}
+
+.eval-btn--B .eval-rank-label {
+  color: var(--neon-cyan);
+}
+
+/* C Button (Clean Silver) */
+.eval-btn--C {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+}
+
+.eval-btn--C .eval-rank-letter {
+  color: #d0d0e0;
+}
+
+.eval-btn--C .eval-rank-label {
+  color: var(--text-secondary);
+}
+
+/* Hover effects */
+.eval-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+}
+
+/* --- Confirm Modal --- */
+.confirm-rank-display {
+  font-size: 4rem;
+  font-weight: 900;
+  margin: var(--space-md) 0;
+  line-height: 1;
+}
+
+.confirm-rank-display--S {
+  background: linear-gradient(135deg, #ff007f, #ffd700, #00d4ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 15px rgba(255, 0, 128, 0.8));
+}
+
+.confirm-rank-display--A {
+  background: linear-gradient(135deg, #ffd700, #ff8c42);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.confirm-rank-display--B {
+  background: linear-gradient(135deg, #00d4ff, #7b68ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.confirm-rank-display--C {
+  color: #e0e0f0;
+}

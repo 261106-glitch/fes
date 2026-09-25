@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -22,8 +23,15 @@
     }
 
     @keyframes heroFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
     }
 
     .progress-bar-wrap {
@@ -100,6 +108,7 @@
     }
   </style>
 </head>
+
 <body>
   <!-- Animated Background -->
   <div class="bg-animated">
@@ -119,13 +128,13 @@
 
       <span class="hero-emoji">🎪</span>
       <h1 class="neon-title neon-title--gradient">スタンプラリー</h1>
-      <p class="subtitle">3つのゲームをクリアしてスタンプを集めよう！</p>
+      <p class="subtitle">4つのゲームをクリアしてスタンプを集めよう！</p>
 
       <!-- Progress Bar -->
       <div class="progress-bar-wrap mt-lg">
         <div class="progress-info">
           <span class="progress-label">進捗</span>
-          <span class="progress-count" id="progressCount">0 / 3</span>
+          <span class="progress-count" id="progressCount">0 / 4</span>
         </div>
         <div class="progress-track">
           <div class="progress-fill" id="progressFill" style="width: 0%"></div>
@@ -139,15 +148,21 @@
       <div class="score-summary-grid">
         <!-- Bowling Score -->
         <div class="score-card" id="scoreCardBowling">
-          <div class="score-card-title">🎳 ボーリング</div>
+          <div class="score-card-title">🎳 ボウリング</div>
           <div class="score-card-val" id="scoreValBowling">-</div>
           <div class="rank-badge rank-badge--none" id="rankBadgeBowling">未プレイ</div>
         </div>
         <!-- Crane Score -->
         <div class="score-card" id="scoreCardCrane">
-          <div class="score-card-title">🧲 クレーン</div>
+          <div class="score-card-title">🏗️ クレーン</div>
           <div class="score-card-val" id="scoreValCrane">-</div>
           <div class="rank-badge rank-badge--none" id="rankBadgeCrane">未プレイ</div>
+        </div>
+        <!-- Typing Score -->
+        <div class="score-card" id="scoreCardTyping">
+          <div class="score-card-title">⌨️ タイピング</div>
+          <div class="score-card-val" id="scoreValTyping">-</div>
+          <div class="rank-badge rank-badge--none" id="rankBadgeTyping">未プレイ</div>
         </div>
       </div>
     </div>
@@ -162,7 +177,7 @@
             <div class="stamp-icon stamp-icon--locked" id="icon-bowling">🎳</div>
           </div>
           <div class="stamp-info">
-            <div class="stamp-name">ボーリング</div>
+            <div class="stamp-name">ボウリング</div>
             <div class="stamp-status" id="status-bowling">未クリア</div>
           </div>
           <span class="stamp-arrow">›</span>
@@ -171,7 +186,7 @@
         <!-- Crane -->
         <a href="crane/index.html" class="glass-card glass-card--interactive stamp-card" id="card-crane">
           <div class="stamp-icon-wrap">
-            <div class="stamp-icon stamp-icon--locked" id="icon-crane">🧲</div>
+            <div class="stamp-icon stamp-icon--locked" id="icon-crane">🏗️</div>
           </div>
           <div class="stamp-info">
             <div class="stamp-name">クレーンゲーム</div>
@@ -180,9 +195,21 @@
           <span class="stamp-arrow">›</span>
         </a>
 
+        <!-- Typing Evaluation -->
+        <a href="typing/index.html" class="glass-card glass-card--interactive stamp-card" id="card-typing">
+          <div class="stamp-icon-wrap">
+            <div class="stamp-icon stamp-icon--locked" id="icon-typing">⌨️</div>
+          </div>
+          <div class="stamp-info">
+            <div class="stamp-name">タイピングの評価</div>
+            <div class="stamp-status" id="status-typing">未クリア</div>
+          </div>
+          <span class="stamp-arrow">›</span>
+        </a>
+
         <!-- Mystery -->
         <a href="mystery/index.html" class="glass-card glass-card--interactive stamp-card" id="card-mystery"
-           onclick="event.preventDefault(); alert('教室にあるQRコードを探してスキャンしてね！📱');">
+          onclick="event.preventDefault(); alert('教室にあるQRコードを探してスキャンしてね！📱');">
           <div class="stamp-icon-wrap">
             <div class="stamp-icon stamp-icon--locked" id="icon-mystery">🔍</div>
           </div>
@@ -218,7 +245,8 @@
         <span style="color: var(--neon-pink); font-size: 0.82rem; font-weight: 700;">※一度設定すると変更できません！</span>
       </p>
       <form id="nicknameForm" onsubmit="handleNicknameSubmit(event)">
-        <input type="text" id="nicknameInput" class="input-field mb-md" placeholder="ニックネームを入力" maxlength="12" required autofocus>
+        <input type="text" id="nicknameInput" class="input-field mb-md" placeholder="ニックネームを入力" maxlength="12" required
+          autofocus>
         <button type="submit" class="btn btn--primary btn--full btn--large">決定してスタート！</button>
       </form>
     </div>
@@ -259,8 +287,9 @@
     function updateScoreUI() {
       const bowling = UserManager.getScore('bowling');
       const crane = UserManager.getScore('crane');
+      const typing = UserManager.getScore('typing');
 
-      // ボーリング
+      // ボウリング
       if (bowling) {
         document.getElementById('scoreValBowling').textContent = `${bowling.value} 本`;
         const badge = document.getElementById('rankBadgeBowling');
@@ -275,20 +304,30 @@
         badge.textContent = `評価: ${crane.rank}`;
         badge.className = `rank-badge rank-badge--${crane.rank}`;
       }
+
+      // タイピング
+      if (typing) {
+        document.getElementById('scoreValTyping').textContent = `${typing.rank} ランク`;
+        const badge = document.getElementById('rankBadgeTyping');
+        badge.textContent = `評価: ${typing.rank}`;
+        badge.className = `rank-badge rank-badge--${typing.rank}`;
+      }
     }
 
     /** スタンプUIを更新 */
     function updateStampUI() {
       const stamps = StampManager.getStamps();
-      const games = ['bowling', 'crane', 'mystery'];
+      const games = ['bowling', 'crane', 'typing', 'mystery'];
       const colorClasses = {
         bowling: 'stamp-icon--bowling',
         crane: 'stamp-icon--crane',
+        typing: 'stamp-icon--typing',
         mystery: 'stamp-icon--mystery'
       };
       const completedTexts = {
         bowling: 'クリア済み ✓',
         crane: 'クリア済み ✓',
+        typing: 'クリア済み ✓',
         mystery: 'クリア済み ✓'
       };
 
@@ -299,7 +338,7 @@
         const status = document.getElementById(`status-${gameId}`);
         const card = document.getElementById(`card-${gameId}`);
 
-        if (stamps[gameId].completed) {
+        if (stamps[gameId] && stamps[gameId].completed) {
           completedCount++;
           // スタンプ取得済みの見た目
           icon.classList.remove('stamp-icon--locked');
@@ -322,14 +361,14 @@
         }
       });
 
-      // ── ボーリングのURL制御 ──
+      // ── ボウリングのURL制御 ──
       const cardBowling = document.getElementById('card-bowling');
       const statusBowling = document.getElementById('status-bowling');
       if (UserManager.hasScore('bowling')) {
         // スコア記録済み → URL解禁！
         cardBowling.classList.remove('disabled-link');
         cardBowling.onclick = null;
-        if (!stamps.bowling.completed) {
+        if (!stamps.bowling?.completed) {
           statusBowling.textContent = 'いつでもプレイ可能';
         }
       } else {
@@ -338,7 +377,7 @@
         statusBowling.textContent = '🔒 QRコードからアクセス';
         cardBowling.onclick = (e) => {
           e.preventDefault();
-          alert('ボーリング会場のQRコードからプレイしてスコアを記録すると、ここからいつでも遊べるようになります！🎳');
+          alert('ボウリング会場のQRコードからプレイしてスコアを記録すると、ここからいつでも遊べるようになります！🎳');
         };
       }
 
@@ -349,7 +388,7 @@
         // スコア記録済み → URL解禁！
         cardCrane.classList.remove('disabled-link');
         cardCrane.onclick = null;
-        if (!stamps.crane.completed) {
+        if (!stamps.crane?.completed) {
           statusCrane.textContent = 'いつでもプレイ可能';
         }
       } else {
@@ -358,14 +397,34 @@
         statusCrane.textContent = '🔒 QRコードからアクセス';
         cardCrane.onclick = (e) => {
           e.preventDefault();
-          alert('クレーンゲーム会場のQRコードからプレイしてスコアを記録すると、ここからいつでも遊べるようになります！🧲');
+          alert('クレーンゲーム会場のQRコードからプレイしてスコアを記録すると、ここからいつでも遊べるようになります！🏗️');
+        };
+      }
+
+      // ── タイピングのURL制御 ──
+      const cardTyping = document.getElementById('card-typing');
+      const statusTyping = document.getElementById('status-typing');
+      if (UserManager.hasScore('typing')) {
+        // スコア記録済み → URL解禁！
+        cardTyping.classList.remove('disabled-link');
+        cardTyping.onclick = null;
+        if (!stamps.typing?.completed) {
+          statusTyping.textContent = 'いつでも評価可能';
+        }
+      } else {
+        // スコア未記録 → ロック！
+        cardTyping.classList.add('disabled-link');
+        statusTyping.textContent = '🔒 QRコードからアクセス';
+        cardTyping.onclick = (e) => {
+          e.preventDefault();
+          alert('タイピング会場のQRコードから評価を記録すると、ここからいつでも確認できるようになります！⌨️');
         };
       }
 
       // ── 謎解きのURL制御 ──
       const cardMystery = document.getElementById('card-mystery');
       const statusMystery = document.getElementById('status-mystery');
-      if (!stamps.mystery.completed) {
+      if (!stamps.mystery?.completed) {
         statusMystery.textContent = 'QRコードからアクセス';
         cardMystery.onclick = (e) => {
           e.preventDefault();
@@ -374,11 +433,11 @@
       }
 
       // プログレスバー更新
-      document.getElementById('progressCount').textContent = `${completedCount} / 3`;
-      document.getElementById('progressFill').style.width = `${(completedCount / 3) * 100}%`;
+      document.getElementById('progressCount').textContent = `${completedCount} / 4`;
+      document.getElementById('progressFill').style.width = `${(completedCount / 4) * 100}%`;
 
       // 全クリア
-      if (completedCount === 3) {
+      if (completedCount === 4) {
         document.getElementById('completionBanner').classList.remove('hidden');
         if (!sessionStorage.getItem('confettiShown')) {
           setTimeout(() => {
@@ -408,4 +467,5 @@
     });
   </script>
 </body>
+
 </html>
