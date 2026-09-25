@@ -1,4 +1,4 @@
-﻿/* ============================================
+/* ============================================
    ⌨️ Typing Evaluation - Game Logic
    ============================================ */
 
@@ -12,7 +12,6 @@
     cacheDom();
     setupEventListeners();
     updateBackBtnState();
-    initRiddle();
     checkAlreadyRecorded();
   }
 
@@ -26,12 +25,6 @@
     els.resultTitle = document.getElementById('resultTitle');
     els.resultRank = document.getElementById('resultRank');
     els.resultRallyBtn = document.getElementById('resultRallyBtn');
-
-    // Riddle Elements
-    els.riddleOverlay = document.getElementById('riddleOverlay');
-    els.riddleFeedback = document.getElementById('riddleFeedback');
-    els.riddleProceedBtn = document.getElementById('riddleProceedBtn');
-    els.riddleOptions = document.querySelectorAll('.riddle-option-btn');
   }
 
   function setupEventListeners() {
@@ -73,53 +66,6 @@
       els.backBtn.style.opacity = '0.3';
       els.backBtn.style.pointerEvents = 'none';
     }
-  }
-
-  // --- Riddle Handling ---
-  function initRiddle() {
-    if (UserManager.isRiddleDone('typing')) {
-      // 既にクリア済みなら非表示
-      if (els.riddleOverlay) {
-        els.riddleOverlay.classList.add('hidden');
-      }
-      return;
-    }
-
-    // 初回プレイ：なぞなぞを表示
-    if (els.riddleOverlay) {
-      els.riddleOverlay.classList.remove('hidden');
-    }
-
-    const correctAnswerIndex = 1; // 2. キーボード
-
-    els.riddleOptions.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const selected = parseInt(btn.getAttribute('data-index'), 10);
-        if (selected === correctAnswerIndex) {
-          // 正解
-          vibrate([50, 50, 100]);
-          els.riddleFeedback.className = 'riddle-feedback riddle-feedback--success';
-          els.riddleFeedback.innerHTML = '🎉 <strong>正解！</strong><br>なんも考えてないけど！';
-          els.riddleFeedback.classList.remove('hidden');
-
-          // 選択肢無効化
-          els.riddleOptions.forEach(b => b.disabled = true);
-
-          // 「評価へ進む」ボタン
-          els.riddleProceedBtn.classList.remove('hidden');
-          els.riddleProceedBtn.onclick = () => {
-            UserManager.setRiddleDone('typing');
-            els.riddleOverlay.classList.add('hidden');
-          };
-        } else {
-          // 不正解
-          vibrate(100);
-          els.riddleFeedback.className = 'riddle-feedback riddle-feedback--error';
-          els.riddleFeedback.innerHTML = '❌ <strong>ざんねん！不正解…</strong><br>もう一度考えて選んでね！';
-          els.riddleFeedback.classList.remove('hidden');
-        }
-      });
-    });
   }
 
   // --- 評価ボタンタップ時の処理（記録してホームに戻す） ---
